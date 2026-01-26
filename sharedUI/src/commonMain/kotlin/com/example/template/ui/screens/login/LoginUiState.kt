@@ -1,0 +1,20 @@
+package com.example.template.ui.screens.login
+
+/**
+ * UI state for the login screen following MVI pattern
+ */
+data class LoginUiState(
+    val email: String = "",
+    val password: String = "",
+    val emailError: ValidationError? = null,
+    val passwordError: ValidationError? = null,
+    val isLoading: Boolean = false,
+    val isLoginSuccessful: Boolean = false,
+    val loginError: String? = null
+) {
+    /**
+     * Check if the login form is valid (no errors)
+     */
+    val isFormValid: Boolean
+        get() = emailError == null && passwordError == null && email.isNotEmpty() && password.isNotEmpty()
+}

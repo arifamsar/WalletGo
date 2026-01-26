@@ -1,0 +1,64 @@
+# Project Rules & Conventions
+
+## Project Context
+- **Type**: Kotlin Multiplatform (KMP) Mobile Application
+- **Targets**: Android (`:androidApp`), iOS (`:iosApp`)
+- **Shared UI**: Compose Multiplatform (`:sharedUI`)
+- **Core Logic**: `:core` module
+
+## Architectural Patterns
+
+### MVI (Model-View-Intent)
+All features must follow the MVI pattern:
+1.  **State**: `FeatureUiState` (Immutable data class)
+2.  **Event**: `FeatureEvent` (Sealed interface/class)
+3.  **ViewModel**: Handles events via `onEvent(event: FeatureEvent)` and exposes `StateFlow<FeatureUiState>`
+4.  **Screen**: Stateless Composable that takes `state` and `onEvent` lambda
+
+**Example**:
+```kotlin
+// ViewModel
+fun onEvent(event: HomeEvent) {
+    when(event) {
+        is HomeEvent.Refresh -> refreshData()
+        is HomeEvent.OnItemClick -> navigateTo(event.item)
+    }
+}
+
+// Composable
+@Composable
+fun HomeScreen(
+    state: HomeUiState,
+    onEvent: (HomeEvent) -> Unit
+) { ... }
+```
+
+### Dependency Injection (Koin)
+- Use **Koin** for DI.
+- `viewModelModule` in `sharedUI` for ViewModels.
+- `dataModule` in `core` for Repositories/Services.
+- Use `koinInject<T>()` in Composables only if strictly necessary (prefer Constructor Injection in VM).
+
+### Navigation
+- Use **Navigation 3** (Type-safe arguments).
+- Routes defined in `com.example.template.navigation`.
+
+## Coding Standards
+
+### File Organization
+- **Shared UI**: `sharedUI/src/commonMain/kotlin/com/example/template/ui/screens/<feature>/`
+  - `FeatureScreen.kt`
+  - `FeatureViewModel.kt`
+  - `FeatureState.kt`
+  - `FeatureEvent.kt`
+- **Core**: `core/src/commonMain/kotlin/com/example/template/core/`
+  - `data/` (Repositories impl, DTOs, Services)
+  - `domain/` (Repository interfaces, Models)
+
+### Dependencies
+- Use Version Catalog: `libs.versions.toml`.
+- Add dependencies in `build.gradle.kts` using `libs.*`.
+
+### Android vs Shared
+- **`:androidApp`** should contain NO business logic or UI. It is merely an entry point.
+- **Resources**: Place shared resources (strings, images) in `sharedUI/src/commonMain/composeResources`.
