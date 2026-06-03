@@ -1,5 +1,5 @@
 <resources>
-    <string name="welcome_to_app">Selamat Datang di Template App</string>
+    <string name="welcome_to_app">Selamat Datang di MoneyLite</string>
     <string name="smart_scheduling">Penjadwalan Cerdas</string>
     <string name="stay_notified">Tetap Terinformasi</string>
     <string name="app_logo">App Logo</string>
@@ -39,4 +39,7 @@
     <string name="schedule">Jadwal</string>
     <string name="transaction">Transaksi</string>
     <string name="profile">Profil</string>
+    <string name="dashboard">Dasbor</string>
+    <string name="budget">Anggaran</string>
+    <string name="settings">Pengaturan</string>
 </resources>

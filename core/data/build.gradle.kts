@@ -1,4 +1,4 @@
-import com.example.template.convention.utils.coreDataDependencies
+import com.moneylite.convention.utils.coreDataDependencies
 
 plugins {
     alias(libs.plugins.template.kotlin.multiplatform)
@@ -8,15 +8,21 @@ plugins {
 
 kotlin {
     androidLibrary {
-        namespace = "com.example.template.core.data"
+        namespace = "com.moneylite.core.data"
         compileSdk = libs.versions.android.compileSdk.get().toInt()
     }
 
     sourceSets {
         commonMain.dependencies {
             api(project(":core:domain"))
+            api(project(":core:ui"))
             implementation(project(":core:common"))
             coreDataDependencies(project)
+        }
+
+        commonTest.dependencies {
+            implementation(kotlin("test"))
+            implementation(libs.kotlinx.coroutines.test)
         }
         
         androidMain.dependencies {

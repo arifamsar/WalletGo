@@ -190,6 +190,6 @@ The iOS app (`iosApp/`) uses SwiftUI wrapper around `ComposeUIViewController`:
 
 ## Conventions
 
-- Package structure: `com.example.template` (presentation), `com.example.template.core` (core)
+- Package structure: `com.moneylite` (presentation), `com.moneylite.core` (core)
 - JVM target: Java 17
 - Compose preview: Use `@Preview` annotation in commonMain

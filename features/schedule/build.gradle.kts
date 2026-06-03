@@ -4,7 +4,7 @@ plugins {
 
 kotlin {
     androidLibrary {
-        namespace = "com.example.template.features.schedule"
+        namespace = "com.moneylite.features.schedule"
         compileSdk = libs.versions.android.compileSdk.get().toInt()
     }
 }

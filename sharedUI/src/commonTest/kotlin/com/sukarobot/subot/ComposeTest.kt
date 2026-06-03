@@ -1,4 +1,4 @@
-package com.example.template
+package com.moneylite
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.Button

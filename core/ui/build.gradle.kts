@@ -1,4 +1,4 @@
-import com.example.template.convention.utils.sharedUiDependencies
+import com.moneylite.convention.utils.sharedUiDependencies
 
 plugins {
     alias(libs.plugins.template.kotlin.multiplatform)
@@ -8,7 +8,7 @@ plugins {
 
 kotlin {
     androidLibrary {
-        namespace = "com.example.template.core.ui"
+        namespace = "com.moneylite.core.ui"
         compileSdk = libs.versions.android.compileSdk.get().toInt()
 
         androidResources.enable = true
@@ -18,6 +18,16 @@ kotlin {
         commonMain.dependencies {
             sharedUiDependencies(project)
             implementation(project(":core:common"))
+            implementation(project(":core:domain"))
+            implementation(libs.composeIcons.tablerIcons)
+            implementation(libs.composeIcons.octicons)
+            implementation(libs.vico.compose)
+            implementation(libs.vico.compose.m3)
+
+        }
+
+        commonTest.dependencies {
+            implementation(kotlin("test"))
         }
 
         androidMain.dependencies {
@@ -28,6 +38,6 @@ kotlin {
 
 compose.resources {
     publicResClass = true
-    packageOfResClass = "com.example.template.core.ui.generated.resources"
+    packageOfResClass = "com.moneylite.core.ui.generated.resources"
     generateResClass = always
 }

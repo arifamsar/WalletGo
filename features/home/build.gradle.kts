@@ -4,7 +4,7 @@ plugins {
 
 kotlin {
     androidLibrary {
-        namespace = "com.example.template.features.home"
+        namespace = "com.moneylite.features.home"
         compileSdk = libs.versions.android.compileSdk.get().toInt()
     }
 }

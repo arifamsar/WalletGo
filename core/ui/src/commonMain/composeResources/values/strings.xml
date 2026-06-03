@@ -1,5 +1,5 @@
 <resources>
-    <string name="welcome_to_app">Welcome to Template App</string>
+    <string name="welcome_to_app">Welcome to MoneyLite</string>
     <string name="smart_scheduling">Smart Scheduling</string>
     <string name="stay_notified">Stay Notified</string>
     <string name="app_logo">App Logo</string>
@@ -39,4 +39,7 @@
     <string name="schedule">Schedule</string>
     <string name="transaction">Transaction</string>
     <string name="profile">Profile</string>
+    <string name="dashboard">Dashboard</string>
+    <string name="budget">Budget</string>
+    <string name="settings">Settings</string>
 </resources>

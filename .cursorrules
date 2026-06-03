@@ -41,7 +41,7 @@ fun HomeScreen(
 
 ### Navigation
 - Use **Navigation 3** (Type-safe arguments).
-- Routes defined in `com.example.template.navigation`.
+- Routes defined in `com.moneylite.navigation`.
 
 ## Coding Standards
 

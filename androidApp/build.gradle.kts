@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.template"
+    namespace = "com.moneylite"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {
-        applicationId = "com.example.template"
+        applicationId = "com.moneylite"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 1

@@ -4,7 +4,7 @@ plugins {
 
 kotlin {
     androidLibrary {
-        namespace = "com.example.template.core.common"
+        namespace = "com.moneylite.core.common"
         compileSdk = libs.versions.android.compileSdk.get().toInt()
     }
 

@@ -1,0 +1,53 @@
+package com.moneylite.ui.screens.splash
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.moneylite.core.data.service.UserPreferences
+import com.moneylite.core.domain.repository.CategoryRepository
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+
+class SplashViewModel(
+    private val userPreferences: UserPreferences,
+    private val categoryRepository: CategoryRepository
+): ViewModel() {
+
+    private val _uiState = MutableStateFlow(SplashUiState())
+    val uiState: StateFlow<SplashUiState> = _uiState
+
+    init {
+        onEvent(SplashEvent.LoadStatuses)
+    }
+
+    fun onEvent(event: SplashEvent) {
+        when (event) {
+            is SplashEvent.LoadStatuses -> handleLoadStatuses()
+        }
+    }
+
+    private fun handleLoadStatuses() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, error = null) }
+            try {
+                categoryRepository.seedDefaultCategories()
+                val isLoggedIn = userPreferences.isLoggedIn()
+                val isOnboardingCompleted = userPreferences.isOnboardingCompleted()
+
+                _uiState.update {
+                    it.copy(
+                        isLoggedIn = isLoggedIn,
+                        isOnboardingCompleted = isOnboardingCompleted,
+                        isLoading = false,
+                        isReady = true
+                    )
+                }
+            } catch (e: Exception) {
+                _uiState.update {
+                    it.copy(isLoading = false, error = e.message)
+                }
+            }
+        }
+    }
+}

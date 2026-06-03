@@ -6,7 +6,7 @@ plugins {
     `java-gradle-plugin`
 }
 
-group = "com.example.template.buildlogic"
+group = "com.moneylite.buildlogic"
 
 dependencies {
     compileOnly(libs.android.gradlePlugin)
@@ -29,23 +29,23 @@ gradlePlugin {
     plugins {
         register("kotlin-multiplatform") {
             id = "template.kotlin.multiplatform"
-            implementationClass = "com.example.template.convention.KotlinMultiplatformConventionPlugin"
+            implementationClass = "com.moneylite.convention.KotlinMultiplatformConventionPlugin"
         }
         register("compose-multiplatform") {
             id = "template.compose.multiplatform"
-            implementationClass = "com.example.template.convention.ComposeMultiplatformConventionPlugin"
+            implementationClass = "com.moneylite.convention.ComposeMultiplatformConventionPlugin"
         }
         register("room") {
             id = "template.room"
-            implementationClass = "com.example.template.convention.RoomConventionPlugin"
+            implementationClass = "com.moneylite.convention.RoomConventionPlugin"
         }
         register("navigation") {
             id = "template.navigation.convention"
-            implementationClass = "com.example.template.convention.NavigationConventionPlugin"
+            implementationClass = "com.moneylite.convention.NavigationConventionPlugin"
         }
         register("feature") {
             id = "template.feature.convention"
-            implementationClass = "com.example.template.convention.FeatureConventionPlugin"
+            implementationClass = "com.moneylite.convention.FeatureConventionPlugin"
         }
     }
 }

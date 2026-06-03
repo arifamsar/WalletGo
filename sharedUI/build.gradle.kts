@@ -1,4 +1,4 @@
-import com.example.template.convention.utils.sharedUiDependencies
+import com.moneylite.convention.utils.sharedUiDependencies
 
 plugins {
     alias(libs.plugins.template.kotlin.multiplatform)
@@ -9,7 +9,7 @@ plugins {
 kotlin {
 
     androidLibrary {
-        namespace = "com.example.template.sharedui"
+        namespace = "com.moneylite.sharedui"
         compileSdk = libs.versions.android.compileSdk.get().toInt()
 
         androidResources.enable = true

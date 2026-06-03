@@ -5,7 +5,7 @@ plugins {
 
 kotlin {
     androidLibrary {
-        namespace = "com.example.template.core.domain"
+        namespace = "com.moneylite.core.domain"
         compileSdk = libs.versions.android.compileSdk.get().toInt()
     }
 
@@ -13,6 +13,12 @@ kotlin {
         commonMain.dependencies {
             implementation(project(":core:common"))
             implementation(libs.kotlinx.coroutines.core)
+            implementation(libs.kotlinx.serialization.json)
+        }
+
+        commonTest.dependencies {
+            implementation(kotlin("test"))
+            implementation(libs.kotlinx.coroutines.test)
         }
     }
 }

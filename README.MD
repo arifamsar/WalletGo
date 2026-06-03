@@ -1,122 +1,134 @@
-# Clean Architecture Template for Compose Multiplatform
+# MoneyLite - Personal Finance Tracker
 
-A production-ready **Kotlin Multiplatform (KMP)** template application targeting **Android** and **iOS**, built with **Compose Multiplatform** for a 100% shared UI.
+**MoneyLite** is a beautiful, offline-first personal finance tracking application built with **Compose Multiplatform (CMP)** and **Clean Architecture**. It is designed for fast transactional entries, sleek Material 3 Expressive UI, and simple monthly budget insights.
 
-This project implements a scalable **Clean Architecture** with **MVI (Model-View-Intent)** pattern, utilizing modern libraries like Koin, Ktor, Room, and Navigation 3.
+---
 
-## 🚀 Features
+## 🚀 MVP Features
 
--   **100% Shared UI**: Write once, run on Android and iOS using Compose Multiplatform.
--   **Clean Architecture**: Separation of concerns into Core, Domain, Data, and UI layers.
--   **MVI Pattern**: Predictable state management using unidirectional data flow.
--   **Type-Safe Navigation**: implementation of `androidx.navigation3` for completely type-safe routing.
--   **Offline-First**: Local database support with Room and DataStore.
--   **Modern Tech Stack**: Uses the latest stable versions of Kotlin, Compose, and Android Jetpack.
+### 1. 📊 Dashboard
+* **Dynamic Monthly Balance**: View current balance, total income, and total expenses for the active month.
+* **Monthly Budget Progress**: A visually striking progress indicator showing budget utilization.
+* **Recent Transactions**: Lists the 5 most recent transactions of the current month with quick click-to-edit actions.
+* **Quick Action FAB**: Add new transactions instantly.
 
-## 🛠️ Tech Stack
+### 2. 🧾 Transactions Ledger
+* **Grouped Ledger**: All transactions grouped by date headers.
+* **Quick Filters**: Filter between *All*, *Income*, and *Expense* types.
+* **Instant Search**: Live, client-side search by notes or description text.
+* **Easy Management**: Click transactions to edit them or delete entries directly from the ledger.
 
-The project leverages a modern, bleeding-edge ecosystem:
+### 3. ➕ Add / Edit Transactions
+* **Expressive Entry**: Large digit input for transaction amounts.
+* **Flexible Config**: Toggle type (Income/Expense), playful grid-based category picker, description text, and date picker (defaults to today).
+* **Validation**: Restricts savings if amount $\le 0$ or if no category is selected.
+* **Edit Mode**: Intelligently loads transaction values by ID using custom use cases and updates them in-place in the SQLite database.
 
-### Core & Architecture
--   **[Kotlin 2.3.0](https://kotlinlang.org/)**: The official language.
--   **[Kotlin Multiplatform](https://kotlinlang.org/docs/multiplatform.html)**: Code sharing logic.
--   **[Coroutines](https://github.com/Kotlin/kotlinx.coroutines)**: Asynchronous programming.
--   **[Koin 4.1.1](https://insert-koin.io/)**: Dependency Injection framework (with `koin-compose-viewmodel`).
--   **[Kermit](https://github.com/touchlab/Kermit)**: Multiplatform logging.
+### 4. 📈 Circular Budget Tracking
+* **Progress Analytics**: Circular visual indicator of current monthly expense vs. the set budget limit.
+* **Alert States**: Contextual warnings such as **Aman** (Safe), **Hati-Hati** (Warning), and **Overbudget**.
 
-### UI & UX
--   **[Compose Multiplatform 1.10.0](https://www.jetbrains.com/lp/compose-multiplatform/)**: Declarative UI framework.
--   **[Material 3](https://m3.material.io/)**: Latest Material Design components.
--   **[Navigation 3](https://developer.android.com/jetpack/compose/navigation)**: Type-safe, multiplatform navigation.
--   **[Coil 3](https://coil-kt.github.io/coil/)**: Image loading engine for CMP (supports Ktor network integration).
--   **[Material Kolor](https://github.com/jordond/MaterialKolor)**: Dynamic Material 3 color palette generation.
+### 5. ⚙️ Settings & Administration
+* **Preferences**: Persisted Dark Theme toggle via preferences DataStore.
+* **Currency**: Hardcoded default to IDR (Rupiah).
+* **Reset Database**: Destructive reset of all transaction data from the SQLite ledger.
 
-### Data & Networking
--   **[Ktor 3.3.3](https://ktor.io/)**: Multiplatform asynchronous HTTP client.
-    -   Engines: `OkHttp` (Android), `Darwin` (iOS).
--   **[Room 2.8.4](https://developer.android.com/jetpack/androidx/releases/room)**: Local SQLite database with KSP support.
--   **[DataStore](https://developer.android.com/topic/libraries/architecture/datastore)**: Key-value storage for preferences.
--   **[Kotlinx Serialization](https://github.com/Kotlin/kotlinx.serialization)**: JSON serialization.
--   **[Kotlinx DateTime](https://github.com/Kotlin/kotlinx-datetime)**: Date and time manipulation.
--   **[FileKit](https://github.com/vinceglb/FileKit)**: Cross-platform file picker and IO.
+---
 
-### Build Tools
--   **Android Gradle Plugin 9.0.0**
--   **Version Catalog**: Dependency management via `libs.versions.toml`.
+## 🛠️ Technology Stack & Libraries
 
-## 📂 Project Structure
+* **Framework**: [Compose Multiplatform (CMP) 1.10.0](https://www.jetbrains.com/lp/compose-multiplatform/) - 100% Shared UI for Android & iOS.
+* **Language**: [Kotlin 2.3.0](https://kotlinlang.org/) (bundled compiler: `2.2.20`).
+* **Database**: [Room 2.8.4](https://developer.android.com/jetpack/androidx/releases/room) - Local, multiplatform SQLite database engine.
+* **DI**: [Koin 4.1.1](https://insert-koin.io/) - Dependency Injection with compose-viewmodel binding.
+* **Navigation**: [Navigation 3 (androidx.navigation3)](https://developer.android.com/jetpack/compose/navigation) - Core type-safe multiplatform navigation.
+* **Key-Value Store**: [Preferences DataStore](https://developer.android.com/topic/libraries/architecture/datastore) - Storage of theme preferences.
+* **Datetime**: [Kotlinx-Datetime 0.8.0](https://github.com/Kotlin/kotlinx-datetime) - Modern date-time manipulation integrated directly with standard library `kotlin.time.Clock` and `kotlin.time.Instant`.
+
+---
+
+## 📂 Project Architecture
+
+MoneyLite adheres strictly to **Clean Architecture** and the **MVI (Model-View-Intent)** presentation pattern across multiple modules:
 
 ```text
-├── androidApp     # Android specific entry point (thin wrapper)
-├── iosApp         # iOS specific entry point (Xcode project)
-├── sharedUI       # (Presentation) UI features, ViewModels, Navigation, Theme
-│   ├── src/commonMain/kotlin/com/example/template/
-│   │   ├── navigation/  # Nav3 Routes and Hosts
-│   │   ├── theme/       # Design System
-│   │   └── ui/screens/  # Feature Screens (MVI)
-├── core           # (Domain & Data) Business logic, Services, Repositories
-│   ├── src/commonMain/kotlin/com/example/template/core/
-│   │   ├── data/        # Repository Implementations, Room, Ktor
-│   │   ├── domain/      # UseCases, Repository Interfaces, Models
-│   │   └── service/     # storage, logging, etc.
+├── androidApp       # Android launcher module (Thin wrapper)
+├── iosApp           # Xcode iOS Project (Thin wrapper)
+├── sharedUI         # Main app navigation host (Nav3) and global theme setup
+├── features/        # Feature presentation modules (Screens, ViewModels, States)
+│   ├── home         # Dashboard / Summary Screen
+│   ├── transactions # Ledger list and Add/Edit transactions form
+│   ├── schedule     # Circular Budget screen
+│   └── profile      # Dark mode settings and data reset action
+└── core/            # Shared business logic and infrastructures
+    ├── domain       # Domain Entities, Use Cases, Repository interfaces
+    ├── data         # Room DB builders, Entity schemas, DAOs, Prefs, Repo implementations
+    └── common       # DateTime extensions and shared utils
 ```
 
-## ⚡ Getting Started
+---
 
-### Prerequisites
--   **JDK 17+** (Required for AGP 8+)
--   **Android Studio** (Koala or newer recommended)
--   **Xcode** (For iOS development, macOS only)
--   **KMP Plugin** (Optional, for better IDE support)
+## 🏗️ Room Database Entities
 
-### Setup
-1.  **Clone** the repository.
-    ```bash
-    git clone https://github.com/your-username/your-repo.git
-    cd your-repo
-    ```
-2.  **Open** in Android Studio.
-3.  **Sync** Gradle project to download dependencies.
-4.  **Run** on Android Emulator or iOS Simulator.
-
-### Rename Package (Optional)
-To use this as a base for your own app, rename the package `com.example.template`:
-1.  Replace `com.example.template` directory structure in `commonMain` source sets.
-2.  Update `namespace` in `build.gradle.kts` files.
-3.  Search and Replace `com.example.template` globally in the project.
-
-## 🏗️ MVI Architecture
-
-We follow a strict **Unidirectional Data Flow (UDF)**:
-
-1.  **UI State**: Immutable data class in `FeatureUiState.kt`.
-2.  **Events**: User actions defined in `FeatureEvent.kt` sealed interface.
-3.  **ViewModel**: Handles events in `onEvent()`, updates state via `StateFlow`.
-4.  **Screen**: Stateless composable receiving `state` and `onEvent` lambda.
-
+### 1. Transaction
+Represents a financial transaction:
 ```kotlin
-// ViewModel
-fun onEvent(event: HomeEvent) {
-    when(event) {
-        is HomeEvent.Refresh -> refreshData()
-        is HomeEvent.OnItemClick -> navigateTo(event.item)
-    }
-}
+data class Transaction(
+    val id: String,
+    val type: TransactionType, // Income, Expense
+    val amount: Long,
+    val categoryId: String,
+    val note: String?,
+    val date: LocalDate,
+    val createdAt: Instant
+)
 ```
 
-## 🔧 Build Commands
+### 2. Category
+Seeded with 8 standard categories (Salary, Freelance, Food, Shopping, Transport, Utilities, Entertainment, Health):
+```kotlin
+data class Category(
+    val id: String,
+    val name: String,
+    val icon: String,
+    val color: String,
+    val type: TransactionType
+)
+```
+
+### 3. Budget
+Monthly spending budgets:
+```kotlin
+data class Budget(
+    val id: String,
+    val limitAmount: Long,
+    val month: Int,
+    val year: Int
+)
+```
+
+---
+
+## ⚡ Build & Compile Commands
+
+To build the debug APK, compile targets, or run tests:
 
 ```bash
-# Build Android Debug APK
+# Assemble Android Debug APK
 ./gradlew :androidApp:assembleDebug
 
-# Run Unit Tests
-./gradlew test
+# Run Domain Unit Tests
+./gradlew :core:domain:desktopTest
 
-# Lint Check
+# Perform Lint checks
 ./gradlew lint
 ```
 
+The compiled Android debug APK is generated at:
+`androidApp/build/outputs/apk/debug/androidApp-debug.apk`
+
+---
+
 ## 📜 License
 
-Distributed under the **GNU GPLv3** License. See `LICENSE` for more information.
+Distributed under the **GNU GPLv3** License. See `LICENSE` for details.
