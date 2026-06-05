@@ -44,4 +44,11 @@ sealed interface Route : NavKey {
 
     @Serializable
     data object ForgetPassword : Route
+
+    @Serializable
+    data object NotificationHistory : Route
+
+    @Serializable
+    data object NotificationSettings : Route
 }
+

@@ -88,12 +88,15 @@ import com.moneylite.core.ui.adaptive.AdaptiveWindowClass
 import com.moneylite.core.ui.adaptive.isExpanded
 import com.moneylite.core.ui.utils.toColor
 import com.moneylite.core.ui.utils.getCategoryIcon
+import com.moneylite.core.common.utils.isToday
 import kotlin.time.Clock
 import kotlin.time.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.koin.compose.viewmodel.koinViewModel
+import org.jetbrains.compose.resources.stringResource
+import com.moneylite.core.ui.generated.resources.*
 
 @Composable
 fun AddTransactionScreen(
@@ -231,7 +234,7 @@ fun AddTransactionScreenContent(
                     .padding(vertical = 12.dp)
             ) {
                 Text(
-                    text = "AMOUNT (IDR)",
+                    text = stringResource(Res.string.amount_idr),
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.outline
@@ -250,7 +253,7 @@ fun AddTransactionScreenContent(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text(
-                            text = "Rp",
+                            text = stringResource(Res.string.currency_symbol),
                             style = TextStyle(
                                 fontSize = amountFontSize,
                                 fontWeight = FontWeight.ExtraBold,
@@ -332,10 +335,10 @@ fun AddTransactionScreenContent(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Text(
-                    text = "Category",
-                    style = MaterialTheme.typography.titleSmall,
+                    text = stringResource(Res.string.category),
+                    style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground
+                    color = MaterialTheme.colorScheme.onSurface
                 )
 
                 FlowRow(
@@ -402,20 +405,20 @@ fun AddTransactionScreenContent(
                     Spacer(modifier = Modifier.width(12.dp))
                     Column {
                         Text(
-                            text = "Transaction Date",
+                            text = stringResource(Res.string.transaction_date),
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.outline
                         )
                         Text(
-                            text = date.toString(),
-                            style = MaterialTheme.typography.bodyMedium,
+                            text = if (date.isToday()) stringResource(Res.string.today) else date.toString(),
+                            style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                     }
                 }
                 Text(
-                    text = "Change",
+                    text = stringResource(Res.string.change),
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.Bold
@@ -460,7 +463,7 @@ fun AddTransactionScreenContent(
                 )
             ) {
                 Text(
-                    text = "Save Transaction",
+                    text = stringResource(Res.string.save_transaction),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
@@ -488,7 +491,7 @@ fun AddTransactionScreenContent(
                         showDatePicker = false
                     }
                 ) {
-                    Text("OK")
+                    Text(stringResource(Res.string.ok))
                 }
             },
             dismissButton = {
@@ -496,7 +499,7 @@ fun AddTransactionScreenContent(
                     shapes = ButtonDefaults.shapes(),
                     onClick = { showDatePicker = false }
                 ) {
-                    Text("Cancel")
+                    Text(stringResource(Res.string.cancel))
                 }
             }
         ) {

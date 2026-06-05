@@ -17,14 +17,20 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ChevronLeft
+import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Wallet
@@ -46,11 +52,16 @@ import androidx.compose.material3.LinearWavyProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -72,10 +83,14 @@ import com.moneylite.core.domain.model.Category
 import com.moneylite.core.ui.adaptive.AdaptiveWindowBox
 import com.moneylite.core.ui.adaptive.AdaptiveWindowClass
 import com.moneylite.core.ui.adaptive.isExpanded
+import com.moneylite.core.ui.components.AppDialog
 import com.moneylite.core.ui.components.RupiahAmountVisualTransformation
+import com.moneylite.core.ui.components.charts.CategoryBudgetBarChart
 import com.moneylite.core.ui.utils.getCategoryIcon
 import com.moneylite.core.ui.utils.toColor
 import org.koin.compose.viewmodel.koinViewModel
+import org.jetbrains.compose.resources.stringResource
+import com.moneylite.core.ui.generated.resources.*
 
 @Composable
 fun BudgetScreen(
@@ -85,6 +100,34 @@ fun BudgetScreen(
     val progressState by viewModel.budgetProgress.collectAsState()
     val categoryBudgets by viewModel.categoryBudgets.collectAsState()
     val categories by viewModel.categories.collectAsState()
+    val deleteCandidate by viewModel.deleteCandidate.collectAsState()
+    val selectedMonth by viewModel.selectedMonth.collectAsState()
+    val selectedYear by viewModel.selectedYear.collectAsState()
+
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(Unit) {
+        viewModel.effects.collect { effect ->
+            when (effect) {
+                is BudgetEffect.CategoryBudgetDeleted -> {
+                    val result = snackbarHostState.showSnackbar(
+                        message = "Budget for ${effect.categoryName} deleted",
+                        actionLabel = "Undo",
+                        withDismissAction = true,
+                        duration = SnackbarDuration.Long
+                    )
+                    when (result) {
+                        SnackbarResult.ActionPerformed -> {
+                            viewModel.undoDeleteCategoryBudget(effect.categoryId)
+                        }
+                        SnackbarResult.Dismissed -> {
+                            viewModel.clearPendingUndo(effect.categoryId)
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     var showEditDialog by remember { mutableStateOf(false) }
     var limitInput by remember { mutableStateOf("") }
@@ -93,6 +136,22 @@ fun BudgetScreen(
     var selectedCategory by remember { mutableStateOf<Category?>(null) }
     var categoryLimitInput by remember { mutableStateOf("") }
     var isEditingCategory by remember { mutableStateOf(false) }
+
+    deleteCandidate?.let { cb ->
+        AppDialog(
+            title = "Delete category budget?",
+            message = "Delete budget limit of ${cb.limitAmount.formatToRupiah()} for ${cb.categoryName}?",
+            confirmText = "Delete",
+            dismissText = "Cancel",
+            icon = Icons.Default.DeleteOutline,
+            onConfirm = {
+                viewModel.confirmDeleteCategoryBudget()
+            },
+            onDismiss = {
+                viewModel.dismissDeleteDialog()
+            }
+        )
+    }
 
     AdaptiveWindowBox(modifier = modifier) { windowClass ->
         BudgetScreenContent(
@@ -137,11 +196,36 @@ fun BudgetScreen(
                 viewModel.updateCategoryBudgetLimit(catId, limit)
                 showCategoryDialog = false
             },
-            onDeleteCategoryBudget = { catId ->
-                viewModel.deleteCategoryBudget(catId)
+            onDeleteCategoryBudget = { cb ->
+                viewModel.requestDeleteCategoryBudget(cb)
             },
-            isEditingCategory = isEditingCategory
+            isEditingCategory = isEditingCategory,
+            snackbarHostState = snackbarHostState,
+            selectedMonth = selectedMonth,
+            selectedYear = selectedYear,
+            onMonthYearSelect = { m, y -> viewModel.selectMonthAndYear(m, y) },
+            onPreviousMonth = { viewModel.navigateToPreviousMonth() },
+            onNextMonth = { viewModel.navigateToNextMonth() }
         )
+    }
+}
+
+@Composable
+private fun getMonthName(month: Int): String {
+    return when (month) {
+        1 -> stringResource(Res.string.month_january)
+        2 -> stringResource(Res.string.month_february)
+        3 -> stringResource(Res.string.month_march)
+        4 -> stringResource(Res.string.month_april)
+        5 -> stringResource(Res.string.month_may)
+        6 -> stringResource(Res.string.month_june)
+        7 -> stringResource(Res.string.month_july)
+        8 -> stringResource(Res.string.month_august)
+        9 -> stringResource(Res.string.month_september)
+        10 -> stringResource(Res.string.month_october)
+        11 -> stringResource(Res.string.month_november)
+        12 -> stringResource(Res.string.month_december)
+        else -> ""
     }
 }
 
@@ -166,18 +250,24 @@ fun BudgetScreenContent(
     onPrepareAddCategoryBudget: () -> Unit,
     onPrepareEditCategoryBudget: (CategoryBudgetProgress) -> Unit,
     onSaveCategoryBudget: (String, Long) -> Unit,
-    onDeleteCategoryBudget: (String) -> Unit,
-    isEditingCategory: Boolean
+    onDeleteCategoryBudget: (CategoryBudgetProgress) -> Unit,
+    isEditingCategory: Boolean,
+    snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
+    selectedMonth: Int = 1,
+    selectedYear: Int = 2026,
+    onMonthYearSelect: (Int, Int) -> Unit = { _, _ -> },
+    onPreviousMonth: () -> Unit = {},
+    onNextMonth: () -> Unit = {}
 ) {
     val remaining = progressState.limitAmount - progressState.usedAmount
-    val remainingLabel = if (remaining >= 0) remaining.formatToRupiah() else "Over Budget (${(-remaining).formatToRupiah()})"
+    val remainingLabel = if (remaining >= 0) remaining.formatToRupiah() else stringResource(Res.string.over_budget, (-remaining).formatToRupiah())
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
                     Text(
-                        text = "Monthly Budget",
+                        text = stringResource(Res.string.monthly_budget),
                         fontWeight = FontWeight.Bold
                     )
                 },
@@ -186,6 +276,7 @@ fun BudgetScreenContent(
                 )
             )
         },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = MaterialTheme.colorScheme.background,
         modifier = Modifier
     ) { innerPadding ->
@@ -199,6 +290,97 @@ fun BudgetScreenContent(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
+            // Month navigation controls (horizontal scrollable list of months & year navigation)
+            item {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    // Year selection row
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        IconButton(
+                            onClick = { onMonthYearSelect(selectedMonth, selectedYear - 1) },
+                            modifier = Modifier.size(36.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.ChevronLeft,
+                                contentDescription = "Previous Year",
+                                tint = MaterialTheme.colorScheme.onBackground
+                            )
+                        }
+                        Text(
+                            text = selectedYear.toString(),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(horizontal = 16.dp)
+                        )
+                        IconButton(
+                            onClick = { onMonthYearSelect(selectedMonth, selectedYear + 1) },
+                            modifier = Modifier.size(36.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.ChevronRight,
+                                contentDescription = "Next Year",
+                                tint = MaterialTheme.colorScheme.onBackground
+                            )
+                        }
+                    }
+
+                    // Horizontally scrollable row of month chips
+                    val months = (1..12).toList()
+                    val lazyListState = rememberLazyListState()
+
+                    LaunchedEffect(selectedMonth) {
+                        val index = (selectedMonth - 1).coerceIn(0, 11)
+                        lazyListState.animateScrollToItem(index)
+                    }
+
+                    LazyRow(
+                        state = lazyListState,
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        contentPadding = PaddingValues(horizontal = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        items(months) { m ->
+                            val isSelected = m == selectedMonth
+                            val chipContainerColor = if (isSelected) {
+                                MaterialTheme.colorScheme.primaryContainer
+                            } else {
+                                MaterialTheme.colorScheme.surfaceContainerLow
+                            }
+                            val chipContentColor = if (isSelected) {
+                                MaterialTheme.colorScheme.onPrimaryContainer
+                            } else {
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            }
+
+                            Box(
+                                modifier = Modifier
+                                    .clip(MaterialTheme.shapes.medium)
+                                    .background(chipContainerColor)
+                                    .clickable { onMonthYearSelect(m, selectedYear) }
+                                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = getMonthName(m).take(3),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                    color = chipContentColor
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
             item {
                 if (windowClass.isExpanded) {
                     Row(
@@ -272,6 +454,12 @@ fun BudgetScreenContent(
                 }
             }
 
+            if (categoryBudgets.isNotEmpty()) {
+                item {
+                    CategoryBudgetBarChart(categoryBudgets = categoryBudgets)
+                }
+            }
+
             // Category Budgets Header
             item {
                 Row(
@@ -280,7 +468,7 @@ fun BudgetScreenContent(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Category Budgets",
+                        text = stringResource(Res.string.category_budgets),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onBackground
@@ -295,7 +483,7 @@ fun BudgetScreenContent(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Add,
-                            contentDescription = "Add Category Budget",
+                            contentDescription = stringResource(Res.string.content_description_add_category_budget),
                             modifier = Modifier.size(20.dp)
                         )
                     }
@@ -311,7 +499,7 @@ fun BudgetScreenContent(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "No category budgets configured yet.",
+                            text = stringResource(Res.string.no_category_budgets),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.outline
                         )
@@ -322,7 +510,7 @@ fun BudgetScreenContent(
                     CategoryBudgetCard(
                         categoryBudget = cb,
                         onEdit = { onPrepareEditCategoryBudget(cb) },
-                        onDelete = { onDeleteCategoryBudget(cb.categoryId) }
+                        onDelete = { onDeleteCategoryBudget(cb) }
                     )
                 }
             }
@@ -347,7 +535,7 @@ fun BudgetScreenContent(
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     Text(
-                        text = "Set Monthly Budget",
+                        text = stringResource(Res.string.set_monthly_budget),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
@@ -357,7 +545,7 @@ fun BudgetScreenContent(
                         onValueChange = {
                             onLimitInputChange(it.rupiahDigits())
                         },
-                        label = { Text("Limit Amount (IDR)") },
+                        label = { Text(stringResource(Res.string.amount_idr)) },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         visualTransformation = RupiahAmountVisualTransformation,
                         singleLine = true,
@@ -556,7 +744,7 @@ fun CategoryBudgetCard(
                                 "${remaining.formatToRupiah()} remaining"
                             },
                             style = MaterialTheme.typography.bodySmall,
-                            color = if (isOver) Color(0xFFD32F2F) else MaterialTheme.colorScheme.outline
+                            color = if (isOver) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.outline
                         )
                     }
                 }
@@ -583,17 +771,17 @@ fun CategoryBudgetCard(
                         Icon(
                             imageVector = Icons.Default.Delete,
                             contentDescription = "Delete Budget",
-                            tint = Color(0xFFD32F2F),
+                            tint = MaterialTheme.colorScheme.error,
                             modifier = Modifier.size(18.dp)
                         )
                     }
                 }
             }
 
-            LinearProgressIndicator(
+            LinearWavyProgressIndicator(
                 progress = { categoryBudget.progress },
                 modifier = Modifier.fillMaxWidth(),
-                color = if (isOver) Color(0xFFD32F2F) else catColor,
+                color = if (isOver) MaterialTheme.colorScheme.error else catColor,
                 trackColor = MaterialTheme.colorScheme.surfaceVariant
             )
 
@@ -632,7 +820,7 @@ private fun BudgetProgressVisual(
         CircularWavyProgressIndicator(
             progress = { progress },
             modifier = Modifier.fillMaxSize(),
-            color = if (progress >= 0.9f) Color(0xFFD32F2F) else MaterialTheme.colorScheme.primary,
+            color = if (progress >= 0.9f) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
             trackColor = MaterialTheme.colorScheme.surfaceVariant
         )
         Column(
@@ -661,11 +849,27 @@ private fun BudgetDetails(
     onPrepareEdit: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val isOver = remaining < 0
+    val progress = progressState.progress
+
+    // Expressive dynamic colors based on budget consumption status
+    val containerColor = when {
+        isOver -> MaterialTheme.colorScheme.errorContainer
+        progress >= 0.8f -> MaterialTheme.colorScheme.tertiaryContainer
+        else -> MaterialTheme.colorScheme.primaryContainer
+    }
+
+    val contentColor = when {
+        isOver -> MaterialTheme.colorScheme.onErrorContainer
+        progress >= 0.8f -> MaterialTheme.colorScheme.onTertiaryContainer
+        else -> MaterialTheme.colorScheme.onPrimaryContainer
+    }
+
     ElevatedCard(
         modifier = modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.large,
         colors = CardDefaults.elevatedCardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer
+            containerColor = containerColor
         )
     ) {
         Column(
@@ -683,13 +887,13 @@ private fun BudgetDetails(
                     Text(
                         text = "Total Limit",
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                        color = contentColor.copy(alpha = 0.7f)
                     )
                     Text(
                         text = progressState.limitAmount.formatToRupiah(),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                        color = contentColor
                     )
                 }
                 IconButton(
@@ -697,12 +901,12 @@ private fun BudgetDetails(
                     onClick = onPrepareEdit,
                     modifier = Modifier
                         .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.1f))
+                        .background(contentColor.copy(alpha = 0.1f))
                 ) {
                     Icon(
                         imageVector = Icons.Default.Edit,
                         contentDescription = "Edit Budget",
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer
+                        tint = contentColor
                     )
                 }
             }
@@ -710,8 +914,8 @@ private fun BudgetDetails(
             LinearWavyProgressIndicator(
                 progress = { progressState.progress },
                 modifier = Modifier.fillMaxWidth(),
-                color = if (progressState.progress >= 0.9f) Color(0xFFD32F2F) else MaterialTheme.colorScheme.primary,
-                trackColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.5f)
+                color = if (isOver) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+                trackColor = contentColor.copy(alpha = 0.2f)
             )
 
             Row(
@@ -722,26 +926,26 @@ private fun BudgetDetails(
                     Text(
                         text = "Remaining",
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                        color = contentColor.copy(alpha = 0.7f)
                     )
                     Text(
                         text = remainingLabel,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = if (remaining >= 0) MaterialTheme.colorScheme.onPrimaryContainer else Color(0xFFC62828)
+                        color = if (isOver) MaterialTheme.colorScheme.error else contentColor
                     )
                 }
                 Column(horizontalAlignment = Alignment.End) {
                     Text(
                         text = "Spent",
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                        color = contentColor.copy(alpha = 0.7f)
                     )
                     Text(
                         text = progressState.usedAmount.formatToRupiah(),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                        color = contentColor
                     )
                 }
             }

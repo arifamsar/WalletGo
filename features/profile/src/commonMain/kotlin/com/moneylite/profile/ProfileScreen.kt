@@ -29,6 +29,7 @@ import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -65,6 +66,8 @@ import com.moneylite.core.ui.adaptive.isExpanded
 import com.moneylite.core.ui.navigation.Route
 import com.moneylite.core.ui.components.AppDialog
 import org.koin.compose.viewmodel.koinViewModel
+import org.jetbrains.compose.resources.stringResource
+import com.moneylite.core.ui.generated.resources.*
 
 data class ProfileMenuItem(
     val title: String,
@@ -114,38 +117,53 @@ fun ProfileScreenContent(
     modifier: Modifier = Modifier,
     onNavigate: (Route) -> Unit = {}
 ) {
-    val generalSettings = remember {
+    val editProfileTitle = stringResource(Res.string.edit_profile)
+    val editProfileSubtitle = stringResource(Res.string.edit_profile_subtitle)
+    val darkModeTitle = stringResource(Res.string.dark_mode)
+    val notificationSettingsTitle = stringResource(Res.string.notification_settings)
+    val notificationSettingsSubtitle = stringResource(Res.string.notification_settings_subtitle)
+    val appSettingsTitle = stringResource(Res.string.app_settings)
+    val appSettingsSubtitle = stringResource(Res.string.app_settings_subtitle)
+
+    val generalSettings = remember(editProfileTitle, editProfileSubtitle) {
         listOf(
             ProfileMenuItem(
-                title = "Edit Profile",
-                subtitle = "Update your personal information",
+                title = editProfileTitle,
+                subtitle = editProfileSubtitle,
                 icon = Icons.Default.Person
             )
         )
     }
 
-    val preferences = remember {
+    val preferences = remember(darkModeTitle, notificationSettingsTitle, notificationSettingsSubtitle, appSettingsTitle, appSettingsSubtitle) {
         listOf(
             ProfileMenuItem(
-                title = "Dark Mode",
+                title = darkModeTitle,
                 icon = Icons.Default.DarkMode,
                 hasSwitch = true
             ),
             ProfileMenuItem(
-                title = "App Settings",
-                subtitle = "Language, currency, and more",
+                title = notificationSettingsTitle,
+                subtitle = notificationSettingsSubtitle,
+                icon = Icons.Default.Notifications,
+                route = Route.NotificationSettings
+            ),
+            ProfileMenuItem(
+                title = appSettingsTitle,
+                subtitle = appSettingsSubtitle,
                 icon = Icons.Default.Settings,
                 route = Route.Settings
             )
         )
     }
 
+
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
                     Text(
-                        text = "Profile",
+                        text = stringResource(Res.string.profile),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold
                     )
@@ -186,10 +204,10 @@ fun ProfileScreenContent(
 
                 item {
                     SettingsSection(
-                        title = "General",
+                        title = stringResource(Res.string.general),
                         items = generalSettings,
                         onClick = { item ->
-                            if (item.title == "Edit Profile") {
+                            if (item.title == editProfileTitle) {
                                 onShowEditProfileDialogChange(true)
                             }
                         }
@@ -198,11 +216,11 @@ fun ProfileScreenContent(
 
                 item {
                     SettingsSection(
-                        title = "Preferences",
+                        title = stringResource(Res.string.preferences),
                         items = preferences,
-                        switchStates = mapOf("Dark Mode" to darkModeEnabled),
+                        switchStates = mapOf(darkModeTitle to darkModeEnabled),
                         onSwitchChange = { title, value ->
-                            if (title == "Dark Mode") onDarkModeChange(value)
+                            if (title == darkModeTitle) onDarkModeChange(value)
                         },
                         onClick = { item ->
                             item.route?.let { onNavigate(it) }
@@ -212,7 +230,7 @@ fun ProfileScreenContent(
 
                 item {
                     Text(
-                        text = "MoneyLite v1.0.0",
+                        text = stringResource(Res.string.app_version_format, "1.0.0"),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.outline,
                         modifier = Modifier.fillMaxWidth()
@@ -227,15 +245,15 @@ fun ProfileScreenContent(
         var tempJob by remember { mutableStateOf(userJob) }
 
         AppDialog(
-            title = "Edit Profile",
-            confirmText = "Save",
+            title = stringResource(Res.string.edit_profile),
+            confirmText = stringResource(Res.string.save),
             onConfirm = {
                 if (tempName.isNotBlank() && tempJob.isNotBlank()) {
                     onUpdateProfile(tempName, tempJob)
                     onShowEditProfileDialogChange(false)
                 }
             },
-            dismissText = "Cancel",
+            dismissText = stringResource(Res.string.cancel),
             onDismiss = { onShowEditProfileDialogChange(false) },
             content = {
                 Column(
@@ -245,7 +263,7 @@ fun ProfileScreenContent(
                     OutlinedTextField(
                         value = tempName,
                         onValueChange = { tempName = it },
-                        label = { Text("Name") },
+                        label = { Text(stringResource(Res.string.name)) },
                         singleLine = true,
                         shape = MaterialTheme.shapes.medium,
                         modifier = Modifier.fillMaxWidth()
@@ -253,7 +271,7 @@ fun ProfileScreenContent(
                     OutlinedTextField(
                         value = tempJob,
                         onValueChange = { tempJob = it },
-                        label = { Text("Job") },
+                        label = { Text(stringResource(Res.string.job)) },
                         singleLine = true,
                         shape = MaterialTheme.shapes.medium,
                         modifier = Modifier.fillMaxWidth()
@@ -361,7 +379,7 @@ private fun ProfileCard(
             ) {
                 Icon(
                     imageVector = Icons.Default.Edit,
-                    contentDescription = "Edit Profile"
+                    contentDescription = stringResource(Res.string.edit_profile)
                 )
             }
         }

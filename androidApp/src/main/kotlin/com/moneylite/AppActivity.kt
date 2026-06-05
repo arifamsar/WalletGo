@@ -15,6 +15,12 @@ class AppActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         initPreferencesDataStore(applicationContext)
         initRoomDatabase(applicationContext)
+        if (android.os.Build.VERSION.SDK_INT >= 33) {
+            val permission = android.Manifest.permission.POST_NOTIFICATIONS
+            if (androidx.core.content.ContextCompat.checkSelfPermission(this, permission) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                androidx.core.app.ActivityCompat.requestPermissions(this, arrayOf(permission), 1)
+            }
+        }
         enableEdgeToEdge()
         setContent { 
             App(

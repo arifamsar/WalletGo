@@ -12,6 +12,8 @@ import com.moneylite.profile.ProfileScreen
 import com.moneylite.profile.SettingsScreen
 import com.moneylite.profile.SettingsDetailScreen
 import com.moneylite.profile.ThemeSettingsScreen
+import com.moneylite.profile.NotificationSettingsScreen
+
 
 fun EntryProviderScope<NavKey>.profileFlow(
     navigator: Navigator
@@ -44,6 +46,13 @@ fun EntryProviderScope<NavKey>.profileFlow(
             onBack = { navigator.goBack() }
         )
     }
+    entry<Route.NotificationSettings>(
+        metadata = ListDetailSceneStrategy.detailPane()
+    ) {
+        NotificationSettingsScreen(
+            onBack = { navigator.goBack() }
+        )
+    }
     entry<Route.SettingsDetail>(
         metadata = ListDetailSceneStrategy.detailPane()
     ) { route ->
@@ -53,3 +62,4 @@ fun EntryProviderScope<NavKey>.profileFlow(
         )
     }
 }
+

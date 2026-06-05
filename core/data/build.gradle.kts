@@ -17,6 +17,7 @@ kotlin {
             api(project(":core:domain"))
             api(project(":core:ui"))
             implementation(project(":core:common"))
+            implementation(libs.alarmee)
             coreDataDependencies(project)
         }
 

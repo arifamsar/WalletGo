@@ -27,8 +27,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.moneylite.core.domain.model.TransactionType
 import com.moneylite.core.domain.model.TransactionUiModel
 import com.moneylite.core.ui.theme.LocalThemeIsDark
@@ -43,6 +45,8 @@ import com.patrykandpatrick.vico.compose.cartesian.layer.LineCartesianLayer
 import com.patrykandpatrick.vico.compose.cartesian.layer.rememberLine
 import com.patrykandpatrick.vico.compose.cartesian.layer.rememberLineCartesianLayer
 import com.patrykandpatrick.vico.compose.common.Fill
+import com.patrykandpatrick.vico.compose.common.component.rememberLineComponent
+import com.patrykandpatrick.vico.compose.common.component.rememberTextComponent
 import kotlin.time.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -147,10 +151,9 @@ fun DailySpendLineChart(
                 .fillMaxWidth()
                 .padding(20.dp)
         ) {
-            Row(
+            Column(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Text(
                     text = when (chartFilter) {
@@ -210,6 +213,24 @@ fun DailySpendLineChart(
                         )
                     ),
                     startAxis = VerticalAxis.rememberStart(
+                        label = rememberTextComponent(
+                            TextStyle(
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                fontSize = 10.sp
+                            )
+                        ),
+                        line = rememberLineComponent(
+                            fill = Fill(MaterialTheme.colorScheme.outlineVariant),
+                            thickness = 1.dp
+                        ),
+                        tick = rememberLineComponent(
+                            fill = Fill(MaterialTheme.colorScheme.outlineVariant),
+                            thickness = 1.dp
+                        ),
+                        guideline = rememberLineComponent(
+                            fill = Fill(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f)),
+                            thickness = 1.dp
+                        ),
                         valueFormatter = CartesianValueFormatter { _, value, _ ->
                             val absVal = if (value < 0) -value else value
                             val sign = if (value < 0) "-" else ""
@@ -223,6 +244,21 @@ fun DailySpendLineChart(
                         }
                     ),
                     bottomAxis = HorizontalAxis.rememberBottom(
+                        label = rememberTextComponent(
+                            TextStyle(
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                fontSize = 10.sp
+                            )
+                        ),
+                        line = rememberLineComponent(
+                            fill = Fill(MaterialTheme.colorScheme.outlineVariant),
+                            thickness = 1.dp
+                        ),
+                        tick = rememberLineComponent(
+                            fill = Fill(MaterialTheme.colorScheme.outlineVariant),
+                            thickness = 1.dp
+                        ),
+                        guideline = null,
                         valueFormatter = CartesianValueFormatter { _, value, _ ->
                             val day = value.toInt() + 1
                             "Day $day"

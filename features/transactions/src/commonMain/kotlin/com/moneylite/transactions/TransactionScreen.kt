@@ -72,6 +72,8 @@ import com.moneylite.core.ui.utils.toColor
 import com.moneylite.core.ui.utils.getCategoryIcon
 import com.moneylite.core.ui.components.charts.DailySpendLineChart
 import org.koin.compose.viewmodel.koinViewModel
+import org.jetbrains.compose.resources.stringResource
+import com.moneylite.core.ui.generated.resources.*
 
 @Composable
 fun TransactionScreen(
@@ -149,7 +151,7 @@ fun TransactionScreenContent(
             TopAppBar(
                 title = {
                     Text(
-                        text = "Transactions",
+                        text = stringResource(Res.string.transactions),
                         fontWeight = FontWeight.Bold,
                         style = MaterialTheme.typography.titleLarge
                     )
@@ -168,7 +170,7 @@ fun TransactionScreenContent(
             ) {
                 Icon(
                     imageVector = Icons.Default.Add,
-                    contentDescription = "Add Transaction"
+                    contentDescription = stringResource(Res.string.content_description_add_transaction)
                 )
             }
         },
@@ -193,11 +195,11 @@ fun TransactionScreenContent(
                 onValueChange = {
                     onIntent(TransactionListIntent.SearchQueryChanged(it))
                 },
-                placeholder = { Text("Search transactions...") },
+                placeholder = { Text(stringResource(Res.string.search_placeholder)) },
                 leadingIcon = {
                     Icon(
                         imageVector = Icons.Default.Search,
-                        contentDescription = "Search"
+                        contentDescription = stringResource(Res.string.content_description_search)
                     )
                 },
                 trailingIcon = {
@@ -210,7 +212,7 @@ fun TransactionScreenContent(
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Close,
-                                contentDescription = "Clear search"
+                                contentDescription = stringResource(Res.string.content_description_clear_search)
                             )
                         }
                     }
@@ -246,7 +248,7 @@ fun TransactionScreenContent(
                     onClick = {
                         onIntent(TransactionListIntent.TypeFilterSelected(null))
                     },
-                    label = { Text("All") },
+                    label = { Text(stringResource(Res.string.filter_all)) },
                     shape = MaterialTheme.shapes.medium,
                     border = if (isAllSelected) null else FilterChipDefaults.filterChipBorder(enabled = true, selected = false),
                     colors = FilterChipDefaults.filterChipColors(
@@ -262,7 +264,7 @@ fun TransactionScreenContent(
                     onClick = {
                         onIntent(TransactionListIntent.TypeFilterSelected(TransactionType.Expense))
                     },
-                    label = { Text("Expenses") },
+                    label = { Text(stringResource(Res.string.filter_expenses)) },
                     shape = MaterialTheme.shapes.medium,
                     border = if (isExpenseSelected) null else FilterChipDefaults.filterChipBorder(enabled = true, selected = false),
                     colors = FilterChipDefaults.filterChipColors(
@@ -278,7 +280,7 @@ fun TransactionScreenContent(
                     onClick = {
                         onIntent(TransactionListIntent.TypeFilterSelected(TransactionType.Income))
                     },
-                    label = { Text("Income") },
+                    label = { Text(stringResource(Res.string.filter_income)) },
                     shape = MaterialTheme.shapes.medium,
                     border = if (isIncomeSelected) null else FilterChipDefaults.filterChipBorder(enabled = true, selected = false),
                     colors = FilterChipDefaults.filterChipColors(
@@ -307,15 +309,15 @@ fun TransactionScreenContent(
                             modifier = Modifier.padding(32.dp)
                         ) {
                             Text(
-                                text = "No transactions found",
-                                style = MaterialTheme.typography.titleMedium,
+                                text = stringResource(Res.string.no_transactions_found),
+                                style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = "Try altering filters or search criteria",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.outline
+                                text = stringResource(Res.string.try_altering_filters),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                             )
                         }
                     }

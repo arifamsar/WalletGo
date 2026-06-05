@@ -4,11 +4,13 @@ import com.moneylite.core.data.local.entity.BudgetEntity
 import com.moneylite.core.data.local.entity.CategoryBudgetEntity
 import com.moneylite.core.data.local.entity.CategoryEntity
 import com.moneylite.core.data.local.entity.TransactionEntity
+import com.moneylite.core.data.local.entity.NotificationEntity
 import com.moneylite.core.domain.model.Budget
 import com.moneylite.core.domain.model.CategoryBudget
 import com.moneylite.core.domain.model.Category
 import com.moneylite.core.domain.model.Transaction
 import com.moneylite.core.domain.model.TransactionType
+import com.moneylite.core.domain.model.NotificationHistoryItem
 
 fun TransactionEntity.toDomain() = Transaction(
     id = id,
@@ -77,5 +79,19 @@ fun CategoryBudget.toEntity() = CategoryBudgetEntity(
     month = month,
     year = year,
     limitAmount = limitAmount
+)
+
+fun NotificationEntity.toDomain() = NotificationHistoryItem(
+    id = id,
+    title = title,
+    body = body,
+    timestamp = timestamp
+)
+
+fun NotificationHistoryItem.toEntity() = NotificationEntity(
+    id = id,
+    title = title,
+    body = body,
+    timestamp = timestamp
 )
 

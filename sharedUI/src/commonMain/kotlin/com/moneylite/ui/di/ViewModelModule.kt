@@ -1,7 +1,9 @@
 package com.moneylite.ui.di
 
 import com.moneylite.home.DashboardViewModel
+import com.moneylite.home.NotificationHistoryViewModel
 import com.moneylite.profile.ProfileViewModel
+import com.moneylite.profile.NotificationSettingsViewModel
 import com.moneylite.schedule.BudgetViewModel
 import com.moneylite.transactions.TransactionViewModel
 import com.moneylite.transactions.AddTransactionViewModel
@@ -22,4 +24,7 @@ val viewModelModule = module {
     viewModelOf(::TransactionViewModel)
     viewModelOf(::AddTransactionViewModel)
     viewModelOf(::BudgetViewModel)
+    viewModelOf(::NotificationHistoryViewModel)
+    viewModelOf(::NotificationSettingsViewModel)
 }
+

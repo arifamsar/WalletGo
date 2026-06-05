@@ -44,12 +44,14 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearWavyProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -73,13 +75,16 @@ import com.moneylite.core.ui.utils.toColor
 import com.moneylite.core.ui.utils.getCategoryIcon
 import com.moneylite.core.ui.components.charts.IncomeExpenseBarChart
 import org.koin.compose.viewmodel.koinViewModel
+import org.jetbrains.compose.resources.stringResource
+import com.moneylite.core.ui.generated.resources.*
 
 @Composable
 fun HomeScreen(
     modifier: Modifier = Modifier,
     onNavigateToAddTransaction: () -> Unit = {},
     onNavigateToTransactions: () -> Unit = {},
-    onNavigateToEditTransaction: (String) -> Unit = {}
+    onNavigateToEditTransaction: (String) -> Unit = {},
+    onNavigateToNotificationHistory: () -> Unit = {}
 ) {
     val viewModel: DashboardViewModel = koinViewModel()
     val uiState by viewModel.uiState.collectAsState()
@@ -91,7 +96,8 @@ fun HomeScreen(
             onRefresh = { viewModel.onIntent(DashboardIntent.Load) },
             onNavigateToAddTransaction = onNavigateToAddTransaction,
             onNavigateToTransactions = onNavigateToTransactions,
-            onNavigateToEditTransaction = onNavigateToEditTransaction
+            onNavigateToEditTransaction = onNavigateToEditTransaction,
+            onNavigateToNotificationHistory = onNavigateToNotificationHistory
         )
     }
 }
@@ -104,7 +110,8 @@ fun HomeScreenContent(
     modifier: Modifier = Modifier,
     onNavigateToAddTransaction: () -> Unit = {},
     onNavigateToTransactions: () -> Unit = {},
-    onNavigateToEditTransaction: (String) -> Unit = {}
+    onNavigateToEditTransaction: (String) -> Unit = {},
+    onNavigateToNotificationHistory: () -> Unit = {}
 ) {
     Scaffold(
         topBar = {
@@ -112,15 +119,24 @@ fun HomeScreenContent(
                 title = {
                     Column {
                         Text(
-                            text = "MoneyLite",
+                            text = stringResource(Res.string.app_name),
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.primary
                         )
                         Text(
-                            text = "Simple, Fast Finance Tracker",
+                            text = stringResource(Res.string.app_subtitle),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                },
+                actions = {
+                    IconButton(onClick = onNavigateToNotificationHistory) {
+                        Icon(
+                            imageVector = Icons.Default.Notifications,
+                            contentDescription = stringResource(Res.string.content_description_notification_history),
+                            tint = MaterialTheme.colorScheme.primary
                         )
                     }
                 },
@@ -129,6 +145,7 @@ fun HomeScreenContent(
                 )
             )
         },
+
         floatingActionButton = {
             FloatingActionButton(
                 onClick = onNavigateToAddTransaction,
@@ -138,7 +155,7 @@ fun HomeScreenContent(
             ) {
                 Icon(
                     imageVector = Icons.Default.Add,
-                    contentDescription = "Add Transaction",
+                    contentDescription = stringResource(Res.string.content_description_add_transaction),
                     modifier = Modifier.size(28.dp)
                 )
             }
@@ -222,7 +239,7 @@ fun HomeScreenContent(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "Recent Transactions",
+                            text = stringResource(Res.string.recent_transactions),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onBackground
@@ -237,7 +254,7 @@ fun HomeScreenContent(
                                 )
                             ) {
                                 Text(
-                                    text = "See All",
+                                    text = stringResource(Res.string.see_all),
                                     style = MaterialTheme.typography.labelMedium
                                 )
                             }
@@ -262,7 +279,7 @@ fun HomeScreenContent(
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
                                 Text(
-                                    text = "No transactions this month",
+                                    text = stringResource(Res.string.no_transactions_this_month),
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -271,7 +288,7 @@ fun HomeScreenContent(
                                     onClick = onNavigateToAddTransaction,
                                     shapes = ButtonDefaults.shapes()
                                 ) {
-                                    Text("Add Transaction Now")
+                                    Text(stringResource(Res.string.add_transaction_now))
                                 }
                             }
                         }
@@ -314,7 +331,7 @@ private fun BalanceCard(
                 .padding(24.dp)
         ) {
             Text(
-                text = "Active Balance",
+                text = stringResource(Res.string.active_balance),
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
             )
@@ -349,7 +366,7 @@ private fun BalanceCard(
                     ) {
                         Icon(
                             imageVector = Icons.Default.ArrowUpward,
-                            contentDescription = "Income",
+                            contentDescription = stringResource(Res.string.income),
                             tint = Color(0xFF2E7D32),
                             modifier = Modifier.size(20.dp)
                         )
@@ -357,7 +374,7 @@ private fun BalanceCard(
                     Spacer(modifier = Modifier.width(8.dp))
                     Column {
                         Text(
-                            text = "Income",
+                            text = stringResource(Res.string.income),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -388,7 +405,7 @@ private fun BalanceCard(
                     ) {
                         Icon(
                             imageVector = Icons.Default.ArrowDownward,
-                            contentDescription = "Expense",
+                            contentDescription = stringResource(Res.string.expense),
                             tint = Color(0xFFC62828),
                             modifier = Modifier.size(20.dp)
                         )
@@ -396,7 +413,7 @@ private fun BalanceCard(
                     Spacer(modifier = Modifier.width(8.dp))
                     Column {
                         Text(
-                            text = "Expense",
+                            text = stringResource(Res.string.expense),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -438,13 +455,13 @@ private fun BudgetProgressCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Monthly Budget",
+                    text = stringResource(Res.string.monthly_budget),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    text = if (limit > 0) "${(usedPercent * 100).toInt()}% used" else "Not set",
+                    text = if (limit > 0) stringResource(Res.string.percent_used, (usedPercent * 100).toInt()) else stringResource(Res.string.not_set),
                     style = MaterialTheme.typography.bodySmall,
                     fontWeight = FontWeight.Medium,
                     color = if (usedPercent >= 0.9f) Color(0xFFC62828) else MaterialTheme.colorScheme.primary
@@ -471,7 +488,7 @@ private fun BudgetProgressCard(
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    text = "Limit: ${limit.formatToRupiah()}",
+                    text = stringResource(Res.string.limit_label, limit.formatToRupiah()),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

@@ -36,10 +36,13 @@ datastore = "1.2.0"
 androidx-adaptive = "1.3.0-alpha03"
 sqlite = "2.6.2"
 vico = "3.1.0"
+alarmee = "2.4.0"
 
 
 [libraries]
 
+alarmee = { group = "io.github.tweener", name = "alarmee", version.ref = "alarmee" }
+alarmee-push = { group = "io.github.tweener", name = "alarmee-push", version.ref = "alarmee" }
 compose-runtime = { module = "org.jetbrains.compose.runtime:runtime", version.ref = "compose-multiplatform" }
 compose-ui = { module = "org.jetbrains.compose.ui:ui", version.ref = "compose-multiplatform" }
 compose-foundation = { module = "org.jetbrains.compose.foundation:foundation", version.ref = "compose-multiplatform" }

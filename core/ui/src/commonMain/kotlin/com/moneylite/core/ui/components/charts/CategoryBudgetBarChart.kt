@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
@@ -29,51 +28,45 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.moneylite.core.domain.model.TransactionType
-import com.moneylite.core.domain.model.TransactionUiModel
+import com.moneylite.core.domain.usecase.CategoryBudgetProgress
+import com.moneylite.core.ui.theme.LocalThemeIsDark
 import com.patrykandpatrick.vico.compose.cartesian.CartesianChartHost
-import com.patrykandpatrick.vico.compose.cartesian.layer.rememberColumnCartesianLayer
-import com.patrykandpatrick.vico.compose.cartesian.rememberCartesianChart
-import com.patrykandpatrick.vico.compose.common.component.rememberLineComponent
-import com.patrykandpatrick.vico.compose.common.component.rememberTextComponent
-import com.patrykandpatrick.vico.compose.common.Fill
 import com.patrykandpatrick.vico.compose.cartesian.axis.HorizontalAxis
 import com.patrykandpatrick.vico.compose.cartesian.axis.VerticalAxis
 import com.patrykandpatrick.vico.compose.cartesian.data.CartesianChartModelProducer
 import com.patrykandpatrick.vico.compose.cartesian.data.CartesianValueFormatter
 import com.patrykandpatrick.vico.compose.cartesian.data.columnSeries
 import com.patrykandpatrick.vico.compose.cartesian.layer.ColumnCartesianLayer
-
-
-
+import com.patrykandpatrick.vico.compose.cartesian.layer.rememberColumnCartesianLayer
+import com.patrykandpatrick.vico.compose.cartesian.rememberCartesianChart
+import com.patrykandpatrick.vico.compose.common.Fill
+import com.patrykandpatrick.vico.compose.common.component.rememberLineComponent
+import com.patrykandpatrick.vico.compose.common.component.rememberTextComponent
 
 @Composable
-fun IncomeExpenseBarChart(
-    transactions: List<TransactionUiModel>,
+fun CategoryBudgetBarChart(
+    categoryBudgets: List<CategoryBudgetProgress>,
     modifier: Modifier = Modifier
 ) {
     val modelProducer = remember { CartesianChartModelProducer() }
 
-    LaunchedEffect(transactions) {
-        val weeklyIncome = mutableMapOf(1 to 0L, 2 to 0L, 3 to 0L, 4 to 0L, 5 to 0L)
-        val weeklyExpense = mutableMapOf(1 to 0L, 2 to 0L, 3 to 0L, 4 to 0L, 5 to 0L)
-
-        for (tx in transactions) {
-            val week = ((tx.date.day - 1) / 7 + 1).coerceIn(1, 5)
-            if (tx.type == TransactionType.Income) {
-                weeklyIncome[week] = (weeklyIncome[week] ?: 0L) + tx.amount
-            } else {
-                weeklyExpense[week] = (weeklyExpense[week] ?: 0L) + tx.amount
-            }
-        }
-
-        modelProducer.runTransaction {
-            columnSeries {
-                series(weeklyIncome.values.toList().map { it.toFloat() })
-                series(weeklyExpense.values.toList().map { it.toFloat() })
+    LaunchedEffect(categoryBudgets) {
+        if (categoryBudgets.isNotEmpty()) {
+            modelProducer.runTransaction {
+                columnSeries {
+                    series(categoryBudgets.map { it.limitAmount.toFloat() })
+                    series(categoryBudgets.map { it.usedAmount.toFloat() })
+                }
             }
         }
     }
+
+    if (categoryBudgets.isEmpty()) return
+
+    val isDark = LocalThemeIsDark.current.value
+    // Expressive chart colors
+    val limitColor = if (isDark) MaterialTheme.colorScheme.secondary.copy(alpha = 0.6f) else MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f)
+    val spentColor = if (isDark) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primary
 
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -93,7 +86,7 @@ fun IncomeExpenseBarChart(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Weekly Cash Flow",
+                    text = "Budget vs actual spent",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
@@ -103,8 +96,8 @@ fun IncomeExpenseBarChart(
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    LegendItem(color = Color(0xFF2E7D32), label = "Income")
-                    LegendItem(color = Color(0xFFC62828), label = "Expense")
+                    LegendItem(color = limitColor, label = "Limit")
+                    LegendItem(color = spentColor, label = "Spent")
                 }
             }
 
@@ -116,12 +109,12 @@ fun IncomeExpenseBarChart(
                         columnProvider = ColumnCartesianLayer.ColumnProvider.series(
                             listOf(
                                 rememberLineComponent(
-                                    fill = Fill(Color(0xFF2E7D32)),
+                                    fill = Fill(limitColor),
                                     thickness = 8.dp,
                                     shape = RoundedCornerShape(topStartPercent = 40, topEndPercent = 40)
                                 ),
                                 rememberLineComponent(
-                                    fill = Fill(Color(0xFFC62828)),
+                                    fill = Fill(spentColor),
                                     thickness = 8.dp,
                                     shape = RoundedCornerShape(topStartPercent = 40, topEndPercent = 40)
                                 )
@@ -174,8 +167,7 @@ fun IncomeExpenseBarChart(
                         ),
                         guideline = null,
                         valueFormatter = CartesianValueFormatter { _, value, _ ->
-                            val week = value.toInt() + 1
-                            "Week $week"
+                            categoryBudgets.getOrNull(value.toInt())?.categoryName ?: ""
                         }
                     )
                 ),

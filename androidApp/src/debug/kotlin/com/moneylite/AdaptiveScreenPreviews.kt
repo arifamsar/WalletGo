@@ -82,7 +82,11 @@ private fun BudgetAdaptivePreview() {
             onPrepareEditCategoryBudget = {},
             onSaveCategoryBudget = { _, _ -> },
             onDeleteCategoryBudget = {},
-            isEditingCategory = false
+            isEditingCategory = false,
+            selectedMonth = 6,
+            selectedYear = 2026,
+            onPreviousMonth = {},
+            onNextMonth = {}
         )
     }
 }

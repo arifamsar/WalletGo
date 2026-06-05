@@ -6,6 +6,7 @@ val dataModule = module {
     includes(
         preferencesModule,
         httpModule,
-        databaseModule
+        databaseModule,
+        alarmeeModule
     )
 }
