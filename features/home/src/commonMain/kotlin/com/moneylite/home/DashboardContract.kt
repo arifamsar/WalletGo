@@ -1,9 +1,11 @@
 package com.moneylite.home
 
+import androidx.compose.runtime.Immutable
 import com.moneylite.core.domain.model.TransactionType
 import com.moneylite.core.domain.model.TransactionUiModel
 import kotlinx.datetime.LocalDate
 
+@Immutable
 data class DashboardState(
     val isLoading: Boolean = true,
     val monthBalance: Long = 0L,

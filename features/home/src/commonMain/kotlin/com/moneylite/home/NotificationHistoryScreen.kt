@@ -41,7 +41,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -77,7 +77,7 @@ fun NotificationHistoryScreen(
     onBack: () -> Unit
 ) {
     val viewModel: NotificationHistoryViewModel = koinViewModel()
-    val historyItems by viewModel.historyItems.collectAsState()
+    val historyItems by viewModel.historyItems.collectAsStateWithLifecycle()
 
     var showClearConfirm by remember { mutableStateOf(false) }
 

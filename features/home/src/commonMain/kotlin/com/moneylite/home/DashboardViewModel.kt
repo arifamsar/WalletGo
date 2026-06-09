@@ -16,6 +16,9 @@ import kotlin.time.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.Dispatchers
+
 class DashboardViewModel(
     private val getMonthlySummaryUseCase: GetMonthlySummaryUseCase,
     private val getBudgetProgressUseCase: GetBudgetProgressUseCase,
@@ -58,24 +61,9 @@ class DashboardViewModel(
             ) { summary, budgetProgress, transactions, categories ->
                 val categoryMap = categories.associateBy { it.id }
 
-                // Filter transactions of this month only and take recent 5
+                // Filter transactions of this month only
                 val thisMonthTransactions = transactions.filter {
                     it.date.month.ordinal + 1 == month && it.date.year == year
-                }
-
-                val recentUiModels = thisMonthTransactions.take(5).map { tx ->
-                    val cat = categoryMap[tx.categoryId]
-                    TransactionUiModel(
-                        id = tx.id,
-                        type = tx.type,
-                        amount = tx.amount,
-                        note = tx.note,
-                        date = tx.date,
-                        categoryId = tx.categoryId,
-                        categoryName = cat?.name ?: "Other",
-                        categoryIcon = cat?.icon ?: "more_horiz",
-                        categoryColor = cat?.colorKey ?: "#607D8B"
-                    )
                 }
 
                 val monthlyUiModels = thisMonthTransactions.map { tx ->
@@ -93,6 +81,8 @@ class DashboardViewModel(
                     )
                 }
 
+                val recentUiModels = monthlyUiModels.take(5)
+
                 DashboardState(
                     isLoading = false,
                     monthBalance = summary.balance,
@@ -103,7 +93,8 @@ class DashboardViewModel(
                     recentTransactions = recentUiModels,
                     monthlyTransactions = monthlyUiModels
                 )
-            }.collect { state ->
+            }.flowOn(Dispatchers.Default)
+            .collect { state ->
                 _uiState.value = state
             }
         }
