@@ -62,7 +62,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -97,12 +97,12 @@ fun BudgetScreen(
     modifier: Modifier = Modifier
 ) {
     val viewModel: BudgetViewModel = koinViewModel()
-    val progressState by viewModel.budgetProgress.collectAsState()
-    val categoryBudgets by viewModel.categoryBudgets.collectAsState()
-    val categories by viewModel.categories.collectAsState()
-    val deleteCandidate by viewModel.deleteCandidate.collectAsState()
-    val selectedMonth by viewModel.selectedMonth.collectAsState()
-    val selectedYear by viewModel.selectedYear.collectAsState()
+    val progressState by viewModel.budgetProgress.collectAsStateWithLifecycle()
+    val categoryBudgets by viewModel.categoryBudgets.collectAsStateWithLifecycle()
+    val categories by viewModel.categories.collectAsStateWithLifecycle()
+    val deleteCandidate by viewModel.deleteCandidate.collectAsStateWithLifecycle()
+    val selectedMonth by viewModel.selectedMonth.collectAsStateWithLifecycle()
+    val selectedYear by viewModel.selectedYear.collectAsStateWithLifecycle()
 
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -287,6 +287,7 @@ fun BudgetScreenContent(
 
         LazyColumn(
             modifier = contentModifier,
+            contentPadding = PaddingValues(bottom = 80.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
@@ -348,7 +349,7 @@ fun BudgetScreenContent(
                         contentPadding = PaddingValues(horizontal = 8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        items(months) { m ->
+                        items(months, key = { it }) { m ->
                             val isSelected = m == selectedMonth
                             val chipContainerColor = if (isSelected) {
                                 MaterialTheme.colorScheme.primaryContainer
