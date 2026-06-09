@@ -14,6 +14,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class TransactionViewModel(
@@ -129,7 +131,8 @@ class TransactionViewModel(
                     groupedTransactions = grouped,
                     deleteCandidate = _uiState.value.deleteCandidate
                 )
-            }.collect { state ->
+            }.flowOn(Dispatchers.Default)
+            .collect { state ->
                 _uiState.value = state
             }
         }

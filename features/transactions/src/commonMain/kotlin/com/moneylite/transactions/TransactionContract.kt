@@ -1,9 +1,11 @@
 package com.moneylite.transactions
 
+import androidx.compose.runtime.Immutable
 import com.moneylite.core.domain.model.TransactionType
 import com.moneylite.core.domain.model.TransactionUiModel
 import kotlinx.datetime.LocalDate
 
+@Immutable
 data class TransactionListState(
     val isLoading: Boolean = false,
     val searchQuery: String = "",

@@ -59,7 +59,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -105,14 +105,14 @@ fun AddTransactionScreen(
     onBack: () -> Unit
 ) {
     val viewModel: AddTransactionViewModel = koinViewModel()
-    val amount by viewModel.amount.collectAsState()
-    val type by viewModel.type.collectAsState()
-    val selectedCategoryId by viewModel.selectedCategoryId.collectAsState()
-    val date by viewModel.date.collectAsState()
-    val note by viewModel.note.collectAsState()
-    val isSaved by viewModel.isSaved.collectAsState()
-    val error by viewModel.error.collectAsState()
-    val categories by viewModel.filteredCategories.collectAsState()
+    val amount by viewModel.amount.collectAsStateWithLifecycle()
+    val type by viewModel.type.collectAsStateWithLifecycle()
+    val selectedCategoryId by viewModel.selectedCategoryId.collectAsStateWithLifecycle()
+    val date by viewModel.date.collectAsStateWithLifecycle()
+    val note by viewModel.note.collectAsStateWithLifecycle()
+    val isSaved by viewModel.isSaved.collectAsStateWithLifecycle()
+    val error by viewModel.error.collectAsStateWithLifecycle()
+    val categories by viewModel.filteredCategories.collectAsStateWithLifecycle()
 
     val snackbarHostState = remember { SnackbarHostState() }
 
