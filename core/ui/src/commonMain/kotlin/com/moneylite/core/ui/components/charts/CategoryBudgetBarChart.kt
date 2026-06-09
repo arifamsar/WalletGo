@@ -52,10 +52,14 @@ fun CategoryBudgetBarChart(
 
     LaunchedEffect(categoryBudgets) {
         if (categoryBudgets.isNotEmpty()) {
-            modelProducer.runTransaction {
-                columnSeries {
-                    series(categoryBudgets.map { it.limitAmount.toFloat() })
-                    series(categoryBudgets.map { it.usedAmount.toFloat() })
+            kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+                val limitSeries = categoryBudgets.map { it.limitAmount.toFloat() }
+                val spentSeries = categoryBudgets.map { it.usedAmount.toFloat() }
+                modelProducer.runTransaction {
+                    columnSeries {
+                        series(limitSeries)
+                        series(spentSeries)
+                    }
                 }
             }
         }
@@ -103,74 +107,92 @@ fun CategoryBudgetBarChart(
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // Remember Vico components to avoid recreation on every recomposition
+            val limitFill = remember(limitColor) { Fill(limitColor) }
+            val spentFill = remember(spentColor) { Fill(spentColor) }
+
+            val limitLineComponent = rememberLineComponent(
+                fill = limitFill,
+                thickness = 8.dp,
+                shape = RoundedCornerShape(topStartPercent = 40, topEndPercent = 40)
+            )
+            val spentLineComponent = rememberLineComponent(
+                fill = spentFill,
+                thickness = 8.dp,
+                shape = RoundedCornerShape(topStartPercent = 40, topEndPercent = 40)
+            )
+
+            val columnProviderList = remember(limitLineComponent, spentLineComponent) {
+                listOf(limitLineComponent, spentLineComponent)
+            }
+            val columnProvider = remember(columnProviderList) {
+                ColumnCartesianLayer.ColumnProvider.series(columnProviderList)
+            }
+            val columnLayer = rememberColumnCartesianLayer(columnProvider = columnProvider)
+
+            val startAxisValueFormatter = remember {
+                CartesianValueFormatter { _, value, _ ->
+                    if (value >= 1_000_000) {
+                        "${(value / 1_000_000).toInt()}M"
+                    } else if (value >= 1_000) {
+                        "${(value / 1_000).toInt()}K"
+                    } else {
+                        value.toInt().toString()
+                    }
+                }
+            }
+
+            val bottomAxisValueFormatter = remember(categoryBudgets) {
+                CartesianValueFormatter { _, value, _ ->
+                    categoryBudgets.getOrNull(value.toInt())?.categoryName ?: ""
+                }
+            }
+
+            val axisLabelColor = MaterialTheme.colorScheme.onSurfaceVariant
+            val axisLabelStyle = remember(axisLabelColor) {
+                TextStyle(
+                    color = axisLabelColor,
+                    fontSize = 10.sp
+                )
+            }
+            val startAxisLabel = rememberTextComponent(axisLabelStyle)
+            val bottomAxisLabel = rememberTextComponent(axisLabelStyle)
+
+            val axisLineColor = MaterialTheme.colorScheme.outlineVariant
+            val axisLineFill = remember(axisLineColor) { Fill(axisLineColor) }
+            val axisLine = rememberLineComponent(fill = axisLineFill, thickness = 1.dp)
+
+            val tickFill = remember(axisLineColor) { Fill(axisLineColor) }
+            val tickLine = rememberLineComponent(fill = tickFill, thickness = 1.dp)
+
+            val guidelineColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f)
+            val guidelineFill = remember(guidelineColor) { Fill(guidelineColor) }
+            val startAxisGuideline = rememberLineComponent(fill = guidelineFill, thickness = 1.dp)
+
+            val startAxis = VerticalAxis.rememberStart(
+                label = startAxisLabel,
+                line = axisLine,
+                tick = tickLine,
+                guideline = startAxisGuideline,
+                valueFormatter = startAxisValueFormatter
+            )
+
+            val bottomAxis = HorizontalAxis.rememberBottom(
+                label = bottomAxisLabel,
+                line = axisLine,
+                tick = tickLine,
+                guideline = null,
+                valueFormatter = bottomAxisValueFormatter
+            )
+
+            val chart = rememberCartesianChart(
+                columnLayer,
+                startAxis = startAxis,
+                bottomAxis = bottomAxis
+            )
+
             CartesianChartHost(
-                chart = rememberCartesianChart(
-                    rememberColumnCartesianLayer(
-                        columnProvider = ColumnCartesianLayer.ColumnProvider.series(
-                            listOf(
-                                rememberLineComponent(
-                                    fill = Fill(limitColor),
-                                    thickness = 8.dp,
-                                    shape = RoundedCornerShape(topStartPercent = 40, topEndPercent = 40)
-                                ),
-                                rememberLineComponent(
-                                    fill = Fill(spentColor),
-                                    thickness = 8.dp,
-                                    shape = RoundedCornerShape(topStartPercent = 40, topEndPercent = 40)
-                                )
-                            )
-                        )
-                    ),
-                    startAxis = VerticalAxis.rememberStart(
-                        label = rememberTextComponent(
-                            TextStyle(
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                fontSize = 10.sp
-                            )
-                        ),
-                        line = rememberLineComponent(
-                            fill = Fill(MaterialTheme.colorScheme.outlineVariant),
-                            thickness = 1.dp
-                        ),
-                        tick = rememberLineComponent(
-                            fill = Fill(MaterialTheme.colorScheme.outlineVariant),
-                            thickness = 1.dp
-                        ),
-                        guideline = rememberLineComponent(
-                            fill = Fill(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f)),
-                            thickness = 1.dp
-                        ),
-                        valueFormatter = CartesianValueFormatter { _, value, _ ->
-                            if (value >= 1_000_000) {
-                                "${(value / 1_000_000).toInt()}M"
-                            } else if (value >= 1_000) {
-                                "${(value / 1_000).toInt()}K"
-                            } else {
-                                value.toInt().toString()
-                            }
-                        }
-                    ),
-                    bottomAxis = HorizontalAxis.rememberBottom(
-                        label = rememberTextComponent(
-                            TextStyle(
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                fontSize = 10.sp
-                            )
-                        ),
-                        line = rememberLineComponent(
-                            fill = Fill(MaterialTheme.colorScheme.outlineVariant),
-                            thickness = 1.dp
-                        ),
-                        tick = rememberLineComponent(
-                            fill = Fill(MaterialTheme.colorScheme.outlineVariant),
-                            thickness = 1.dp
-                        ),
-                        guideline = null,
-                        valueFormatter = CartesianValueFormatter { _, value, _ ->
-                            categoryBudgets.getOrNull(value.toInt())?.categoryName ?: ""
-                        }
-                    )
-                ),
+                chart = chart,
                 modelProducer = modelProducer,
                 modifier = Modifier
                     .fillMaxWidth()

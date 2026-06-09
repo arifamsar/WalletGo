@@ -55,22 +55,27 @@ fun IncomeExpenseBarChart(
     val modelProducer = remember { CartesianChartModelProducer() }
 
     LaunchedEffect(transactions) {
-        val weeklyIncome = mutableMapOf(1 to 0L, 2 to 0L, 3 to 0L, 4 to 0L, 5 to 0L)
-        val weeklyExpense = mutableMapOf(1 to 0L, 2 to 0L, 3 to 0L, 4 to 0L, 5 to 0L)
+        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+            val weeklyIncome = mutableMapOf(1 to 0L, 2 to 0L, 3 to 0L, 4 to 0L, 5 to 0L)
+            val weeklyExpense = mutableMapOf(1 to 0L, 2 to 0L, 3 to 0L, 4 to 0L, 5 to 0L)
 
-        for (tx in transactions) {
-            val week = ((tx.date.day - 1) / 7 + 1).coerceIn(1, 5)
-            if (tx.type == TransactionType.Income) {
-                weeklyIncome[week] = (weeklyIncome[week] ?: 0L) + tx.amount
-            } else {
-                weeklyExpense[week] = (weeklyExpense[week] ?: 0L) + tx.amount
+            for (tx in transactions) {
+                val week = ((tx.date.day - 1) / 7 + 1).coerceIn(1, 5)
+                if (tx.type == TransactionType.Income) {
+                    weeklyIncome[week] = (weeklyIncome[week] ?: 0L) + tx.amount
+                } else {
+                    weeklyExpense[week] = (weeklyExpense[week] ?: 0L) + tx.amount
+                }
             }
-        }
 
-        modelProducer.runTransaction {
-            columnSeries {
-                series(weeklyIncome.values.toList().map { it.toFloat() })
-                series(weeklyExpense.values.toList().map { it.toFloat() })
+            val incomeSeries = weeklyIncome.values.toList().map { it.toFloat() }
+            val expenseSeries = weeklyExpense.values.toList().map { it.toFloat() }
+
+            modelProducer.runTransaction {
+                columnSeries {
+                    series(incomeSeries)
+                    series(expenseSeries)
+                }
             }
         }
     }
@@ -110,75 +115,93 @@ fun IncomeExpenseBarChart(
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // Remember Vico components to avoid recreation on every recomposition
+            val incomeFill = remember { Fill(Color(0xFF2E7D32)) }
+            val expenseFill = remember { Fill(Color(0xFFC62828)) }
+
+            val incomeLineComponent = rememberLineComponent(
+                fill = incomeFill,
+                thickness = 8.dp,
+                shape = RoundedCornerShape(topStartPercent = 40, topEndPercent = 40)
+            )
+            val expenseLineComponent = rememberLineComponent(
+                fill = expenseFill,
+                thickness = 8.dp,
+                shape = RoundedCornerShape(topStartPercent = 40, topEndPercent = 40)
+            )
+
+            val columnProviderList = remember(incomeLineComponent, expenseLineComponent) {
+                listOf(incomeLineComponent, expenseLineComponent)
+            }
+            val columnProvider = remember(columnProviderList) {
+                ColumnCartesianLayer.ColumnProvider.series(columnProviderList)
+            }
+            val columnLayer = rememberColumnCartesianLayer(columnProvider = columnProvider)
+
+            val startAxisValueFormatter = remember {
+                CartesianValueFormatter { _, value, _ ->
+                    if (value >= 1_000_000) {
+                        "${(value / 1_000_000).toInt()}M"
+                    } else if (value >= 1_000) {
+                        "${(value / 1_000).toInt()}K"
+                    } else {
+                        value.toInt().toString()
+                    }
+                }
+            }
+
+            val bottomAxisValueFormatter = remember {
+                CartesianValueFormatter { _, value, _ ->
+                    val week = value.toInt() + 1
+                    "Week $week"
+                }
+            }
+
+            val axisLabelColor = MaterialTheme.colorScheme.onSurfaceVariant
+            val axisLabelStyle = remember(axisLabelColor) {
+                TextStyle(
+                    color = axisLabelColor,
+                    fontSize = 10.sp
+                )
+            }
+            val startAxisLabel = rememberTextComponent(axisLabelStyle)
+            val bottomAxisLabel = rememberTextComponent(axisLabelStyle)
+
+            val axisLineColor = MaterialTheme.colorScheme.outlineVariant
+            val axisLineFill = remember(axisLineColor) { Fill(axisLineColor) }
+            val axisLine = rememberLineComponent(fill = axisLineFill, thickness = 1.dp)
+
+            val tickFill = remember(axisLineColor) { Fill(axisLineColor) }
+            val tickLine = rememberLineComponent(fill = tickFill, thickness = 1.dp)
+
+            val guidelineColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f)
+            val guidelineFill = remember(guidelineColor) { Fill(guidelineColor) }
+            val startAxisGuideline = rememberLineComponent(fill = guidelineFill, thickness = 1.dp)
+
+            val startAxis = VerticalAxis.rememberStart(
+                label = startAxisLabel,
+                line = axisLine,
+                tick = tickLine,
+                guideline = startAxisGuideline,
+                valueFormatter = startAxisValueFormatter
+            )
+
+            val bottomAxis = HorizontalAxis.rememberBottom(
+                label = bottomAxisLabel,
+                line = axisLine,
+                tick = tickLine,
+                guideline = null,
+                valueFormatter = bottomAxisValueFormatter
+            )
+
+            val chart = rememberCartesianChart(
+                columnLayer,
+                startAxis = startAxis,
+                bottomAxis = bottomAxis
+            )
+
             CartesianChartHost(
-                chart = rememberCartesianChart(
-                    rememberColumnCartesianLayer(
-                        columnProvider = ColumnCartesianLayer.ColumnProvider.series(
-                            listOf(
-                                rememberLineComponent(
-                                    fill = Fill(Color(0xFF2E7D32)),
-                                    thickness = 8.dp,
-                                    shape = RoundedCornerShape(topStartPercent = 40, topEndPercent = 40)
-                                ),
-                                rememberLineComponent(
-                                    fill = Fill(Color(0xFFC62828)),
-                                    thickness = 8.dp,
-                                    shape = RoundedCornerShape(topStartPercent = 40, topEndPercent = 40)
-                                )
-                            )
-                        )
-                    ),
-                    startAxis = VerticalAxis.rememberStart(
-                        label = rememberTextComponent(
-                            TextStyle(
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                fontSize = 10.sp
-                            )
-                        ),
-                        line = rememberLineComponent(
-                            fill = Fill(MaterialTheme.colorScheme.outlineVariant),
-                            thickness = 1.dp
-                        ),
-                        tick = rememberLineComponent(
-                            fill = Fill(MaterialTheme.colorScheme.outlineVariant),
-                            thickness = 1.dp
-                        ),
-                        guideline = rememberLineComponent(
-                            fill = Fill(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f)),
-                            thickness = 1.dp
-                        ),
-                        valueFormatter = CartesianValueFormatter { _, value, _ ->
-                            if (value >= 1_000_000) {
-                                "${(value / 1_000_000).toInt()}M"
-                            } else if (value >= 1_000) {
-                                "${(value / 1_000).toInt()}K"
-                            } else {
-                                value.toInt().toString()
-                            }
-                        }
-                    ),
-                    bottomAxis = HorizontalAxis.rememberBottom(
-                        label = rememberTextComponent(
-                            TextStyle(
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                fontSize = 10.sp
-                            )
-                        ),
-                        line = rememberLineComponent(
-                            fill = Fill(MaterialTheme.colorScheme.outlineVariant),
-                            thickness = 1.dp
-                        ),
-                        tick = rememberLineComponent(
-                            fill = Fill(MaterialTheme.colorScheme.outlineVariant),
-                            thickness = 1.dp
-                        ),
-                        guideline = null,
-                        valueFormatter = CartesianValueFormatter { _, value, _ ->
-                            val week = value.toInt() + 1
-                            "Week $week"
-                        }
-                    )
-                ),
+                chart = chart,
                 modelProducer = modelProducer,
                 modifier = Modifier
                     .fillMaxWidth()

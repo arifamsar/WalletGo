@@ -80,48 +80,50 @@ fun DailySpendLineChart(
     val currentDay = now.day
 
     LaunchedEffect(transactions, chartFilter) {
-        // Filter transactions of the current month
-        val monthlyTransactions = transactions.filter {
-            it.date.month == currentMonth &&
-            it.date.year == currentYear
-        }
+        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+            // Filter transactions of the current month
+            val monthlyTransactions = transactions.filter {
+                it.date.month == currentMonth &&
+                it.date.year == currentYear
+            }
 
-        // Group by day of month
-        val txsByDay = monthlyTransactions.groupBy { it.date.day }
+            // Group by day of month
+            val txsByDay = monthlyTransactions.groupBy { it.date.day }
 
-        // Cumulative arrays
-        val cumulativeExpenses = mutableListOf<Float>()
-        val cumulativeIncome = mutableListOf<Float>()
-        val cumulativeNet = mutableListOf<Float>()
+            // Cumulative arrays
+            val cumulativeExpenses = mutableListOf<Float>()
+            val cumulativeIncome = mutableListOf<Float>()
+            val cumulativeNet = mutableListOf<Float>()
 
-        var runningExpense = 0L
-        var runningIncome = 0L
-        var runningNet = 0L
+            var runningExpense = 0L
+            var runningIncome = 0L
+            var runningNet = 0L
 
-        for (day in 1..currentDay) {
-            val dayTxs = txsByDay[day] ?: emptyList()
+            for (day in 1..currentDay) {
+                val dayTxs = txsByDay[day] ?: emptyList()
 
-            val dayExpense = dayTxs.filter { it.type == TransactionType.Expense }.sumOf { it.amount }
-            val dayIncome = dayTxs.filter { it.type == TransactionType.Income }.sumOf { it.amount }
+                val dayExpense = dayTxs.filter { it.type == TransactionType.Expense }.sumOf { it.amount }
+                val dayIncome = dayTxs.filter { it.type == TransactionType.Income }.sumOf { it.amount }
 
-            runningExpense += dayExpense
-            runningIncome += dayIncome
-            runningNet += (dayIncome - dayExpense)
+                runningExpense += dayExpense
+                runningIncome += dayIncome
+                runningNet += (dayIncome - dayExpense)
 
-            cumulativeExpenses.add(runningExpense.toFloat())
-            cumulativeIncome.add(runningIncome.toFloat())
-            cumulativeNet.add(runningNet.toFloat())
-        }
+                cumulativeExpenses.add(runningExpense.toFloat())
+                cumulativeIncome.add(runningIncome.toFloat())
+                cumulativeNet.add(runningNet.toFloat())
+            }
 
-        val seriesData = when (chartFilter) {
-            ChartFilter.Expense -> if (cumulativeExpenses.isEmpty()) listOf(0f) else cumulativeExpenses
-            ChartFilter.Income -> if (cumulativeIncome.isEmpty()) listOf(0f) else cumulativeIncome
-            ChartFilter.Net -> if (cumulativeNet.isEmpty()) listOf(0f) else cumulativeNet
-        }
+            val seriesData = when (chartFilter) {
+                ChartFilter.Expense -> if (cumulativeExpenses.isEmpty()) listOf(0f) else cumulativeExpenses
+                ChartFilter.Income -> if (cumulativeIncome.isEmpty()) listOf(0f) else cumulativeIncome
+                ChartFilter.Net -> if (cumulativeNet.isEmpty()) listOf(0f) else cumulativeNet
+            }
 
-        modelProducer.runTransaction {
-            lineSeries {
-                series(seriesData)
+            modelProducer.runTransaction {
+                lineSeries {
+                    series(seriesData)
+                }
             }
         }
     }
@@ -195,76 +197,92 @@ fun DailySpendLineChart(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            CartesianChartHost(
-                chart = rememberCartesianChart(
-                    rememberLineCartesianLayer(
-                        lineProvider = LineCartesianLayer.LineProvider.series(
-                            LineCartesianLayer.rememberLine(
-                                fill = LineCartesianLayer.LineFill.single(Fill(lineColor)),
-                                areaFill = LineCartesianLayer.AreaFill.single(
-                                    Fill(
-                                        Brush.verticalGradient(
-                                            listOf(lineColor.copy(alpha = 0.24f), Color.Transparent)
-                                        )
-                                    )
-                                ),
-                                interpolator = LineCartesianLayer.Interpolator.cubic()
-                            )
+            // Remember Vico components to avoid recreation on every recomposition
+            val lineFill = remember(lineColor) { LineCartesianLayer.LineFill.single(Fill(lineColor)) }
+            val areaFill = remember(lineColor) {
+                LineCartesianLayer.AreaFill.single(
+                    Fill(
+                        Brush.verticalGradient(
+                            listOf(lineColor.copy(alpha = 0.24f), Color.Transparent)
                         )
-                    ),
-                    startAxis = VerticalAxis.rememberStart(
-                        label = rememberTextComponent(
-                            TextStyle(
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                fontSize = 10.sp
-                            )
-                        ),
-                        line = rememberLineComponent(
-                            fill = Fill(MaterialTheme.colorScheme.outlineVariant),
-                            thickness = 1.dp
-                        ),
-                        tick = rememberLineComponent(
-                            fill = Fill(MaterialTheme.colorScheme.outlineVariant),
-                            thickness = 1.dp
-                        ),
-                        guideline = rememberLineComponent(
-                            fill = Fill(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f)),
-                            thickness = 1.dp
-                        ),
-                        valueFormatter = CartesianValueFormatter { _, value, _ ->
-                            val absVal = if (value < 0) -value else value
-                            val sign = if (value < 0) "-" else ""
-                            if (absVal >= 1_000_000) {
-                                "$sign${(absVal / 1_000_000).toInt()}M"
-                            } else if (absVal >= 1_000) {
-                                "$sign${(absVal / 1_000).toInt()}K"
-                            } else {
-                                value.toInt().toString()
-                            }
-                        }
-                    ),
-                    bottomAxis = HorizontalAxis.rememberBottom(
-                        label = rememberTextComponent(
-                            TextStyle(
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                fontSize = 10.sp
-                            )
-                        ),
-                        line = rememberLineComponent(
-                            fill = Fill(MaterialTheme.colorScheme.outlineVariant),
-                            thickness = 1.dp
-                        ),
-                        tick = rememberLineComponent(
-                            fill = Fill(MaterialTheme.colorScheme.outlineVariant),
-                            thickness = 1.dp
-                        ),
-                        guideline = null,
-                        valueFormatter = CartesianValueFormatter { _, value, _ ->
-                            val day = value.toInt() + 1
-                            "Day $day"
-                        }
                     )
-                ),
+                )
+            }
+            val cubicInterpolator = remember { LineCartesianLayer.Interpolator.cubic() }
+            val line = LineCartesianLayer.rememberLine(
+                fill = lineFill,
+                areaFill = areaFill,
+                interpolator = cubicInterpolator
+            )
+            val lineProvider = remember(line) { LineCartesianLayer.LineProvider.series(line) }
+            val lineLayer = rememberLineCartesianLayer(lineProvider = lineProvider)
+
+            val startAxisValueFormatter = remember {
+                CartesianValueFormatter { _, value, _ ->
+                    val absVal = if (value < 0) -value else value
+                    val sign = if (value < 0) "-" else ""
+                    if (absVal >= 1_000_000) {
+                        "$sign${(absVal / 1_000_000).toInt()}M"
+                    } else if (absVal >= 1_000) {
+                        "$sign${(absVal / 1_000).toInt()}K"
+                    } else {
+                        value.toInt().toString()
+                    }
+                }
+            }
+
+            val bottomAxisValueFormatter = remember {
+                CartesianValueFormatter { _, value, _ ->
+                    val day = value.toInt() + 1
+                    "Day $day"
+                }
+            }
+
+            val axisLabelColor = MaterialTheme.colorScheme.onSurfaceVariant
+            val axisLabelStyle = remember(axisLabelColor) {
+                TextStyle(
+                    color = axisLabelColor,
+                    fontSize = 10.sp
+                )
+            }
+            val startAxisLabel = rememberTextComponent(axisLabelStyle)
+            val bottomAxisLabel = rememberTextComponent(axisLabelStyle)
+
+            val axisLineColor = MaterialTheme.colorScheme.outlineVariant
+            val axisLineFill = remember(axisLineColor) { Fill(axisLineColor) }
+            val axisLine = rememberLineComponent(fill = axisLineFill, thickness = 1.dp)
+
+            val tickFill = remember(axisLineColor) { Fill(axisLineColor) }
+            val tickLine = rememberLineComponent(fill = tickFill, thickness = 1.dp)
+
+            val guidelineColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f)
+            val guidelineFill = remember(guidelineColor) { Fill(guidelineColor) }
+            val startAxisGuideline = rememberLineComponent(fill = guidelineFill, thickness = 1.dp)
+
+            val startAxis = VerticalAxis.rememberStart(
+                label = startAxisLabel,
+                line = axisLine,
+                tick = tickLine,
+                guideline = startAxisGuideline,
+                valueFormatter = startAxisValueFormatter
+            )
+
+            val bottomAxis = HorizontalAxis.rememberBottom(
+                label = bottomAxisLabel,
+                line = axisLine,
+                tick = tickLine,
+                guideline = null,
+                valueFormatter = bottomAxisValueFormatter
+            )
+
+            val chart = rememberCartesianChart(
+                lineLayer,
+                startAxis = startAxis,
+                bottomAxis = bottomAxis
+            )
+
+            CartesianChartHost(
+                chart = chart,
                 modelProducer = modelProducer,
                 modifier = Modifier
                     .fillMaxWidth()
