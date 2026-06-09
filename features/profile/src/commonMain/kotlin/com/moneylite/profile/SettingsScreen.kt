@@ -46,7 +46,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -76,8 +76,8 @@ fun SettingsScreen(
 ) {
     val userPreferences = koinInject<UserPreferences>()
     val transactionRepository = koinInject<TransactionRepository>()
-    val isDark by userPreferences.darkModeEnabledFlow().collectAsState(initial = false)
-    val themeTemplate by userPreferences.themeTemplateFlow().collectAsState(initial = ThemeTemplate.Default)
+    val isDark by userPreferences.darkModeEnabledFlow().collectAsStateWithLifecycle(initialValue = false)
+    val themeTemplate by userPreferences.themeTemplateFlow().collectAsStateWithLifecycle(initialValue = ThemeTemplate.Default)
     val coroutineScope = rememberCoroutineScope()
 
     var showClearDialog by remember { mutableStateOf(false) }

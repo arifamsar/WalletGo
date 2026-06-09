@@ -46,7 +46,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -76,12 +76,12 @@ fun NotificationSettingsScreen(
     onBack: () -> Unit
 ) {
     val viewModel: NotificationSettingsViewModel = koinViewModel()
-    val isEnabled by viewModel.notificationsEnabled.collectAsState()
-    val threshold by viewModel.warningThreshold.collectAsState()
-    val dailyEnabled by viewModel.dailyReminderEnabled.collectAsState()
-    val dailyHour by viewModel.dailyReminderHour.collectAsState()
-    val scheduledEnabled by viewModel.scheduledAlertsEnabled.collectAsState()
-    val weeklyEnabled by viewModel.weeklyReportEnabled.collectAsState()
+    val isEnabled by viewModel.notificationsEnabled.collectAsStateWithLifecycle()
+    val threshold by viewModel.warningThreshold.collectAsStateWithLifecycle()
+    val dailyEnabled by viewModel.dailyReminderEnabled.collectAsStateWithLifecycle()
+    val dailyHour by viewModel.dailyReminderHour.collectAsStateWithLifecycle()
+    val scheduledEnabled by viewModel.scheduledAlertsEnabled.collectAsStateWithLifecycle()
+    val weeklyEnabled by viewModel.weeklyReportEnabled.collectAsStateWithLifecycle()
 
     AdaptiveWindowBox(modifier = modifier) { windowClass ->
         NotificationSettingsScreenContent(

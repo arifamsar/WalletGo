@@ -28,7 +28,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -51,8 +51,8 @@ fun ThemeSettingsScreen(
     onBack: () -> Unit
 ) {
     val userPreferences = koinInject<UserPreferences>()
-    val isDark by userPreferences.darkModeEnabledFlow().collectAsState(initial = false)
-    val selectedTemplate by userPreferences.themeTemplateFlow().collectAsState(initial = ThemeTemplate.Default)
+    val isDark by userPreferences.darkModeEnabledFlow().collectAsStateWithLifecycle(initialValue = false)
+    val selectedTemplate by userPreferences.themeTemplateFlow().collectAsStateWithLifecycle(initialValue = ThemeTemplate.Default)
     val coroutineScope = rememberCoroutineScope()
 
     AdaptiveWindowBox(modifier = modifier) { windowClass ->
