@@ -25,7 +25,7 @@ class DocumentPickerDelegate(
         try {
             val content = NSString.stringWithContentsOfURL(url, NSUTF8StringEncoding, null)
             if (content != null) {
-                onPicked(content.toString())
+                onPicked(content)
             }
         } catch (e: Exception) {
             // Fail-safe

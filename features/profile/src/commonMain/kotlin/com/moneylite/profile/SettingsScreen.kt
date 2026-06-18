@@ -67,6 +67,7 @@ import com.moneylite.core.domain.usecase.ImportTransactionsUseCase
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Upload
 import com.moneylite.core.ui.components.FilePickerButton
+import com.moneylite.core.ui.components.FileSaverButton
 import com.moneylite.core.ui.adaptive.AdaptiveWindowBox
 import com.moneylite.core.ui.adaptive.AdaptiveWindowClass
 import com.moneylite.core.ui.adaptive.isExpanded
@@ -111,10 +112,10 @@ fun SettingsScreen(
                 }
                 showClearDialog = false
             },
-            onExportLedger = {
+            onExportLedger = { onReady ->
                 coroutineScope.launch {
                     val csvText = exportTransactionsUseCase()
-                    shareText(csvText, "Export Ledger")
+                    onReady(csvText)
                 }
             },
             onImportLedger = { csvContent ->
@@ -159,7 +160,7 @@ fun SettingsScreenContent(
     onDarkModeChange: (Boolean) -> Unit,
     onShowClearDialogChange: (Boolean) -> Unit,
     onClearDatabase: () -> Unit,
-    onExportLedger: () -> Unit,
+    onExportLedger: ((String) -> Unit) -> Unit,
     onImportLedger: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -287,19 +288,25 @@ fun SettingsScreenContent(
             ) {
                 Column {
                     // Export ledger row
-                    SettingRow(
-                        icon = Icons.Default.Share,
-                        title = "Export Ledger",
-                        subtitle = "Share transactions list as CSV",
-                        action = {
-                            Icon(
-                                imageVector = Icons.Default.ChevronRight,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.outline
-                            )
-                        },
-                        onClick = onExportLedger
-                    )
+                    FileSaverButton(
+                        onRequestFileContent = onExportLedger,
+                        fileName = "moneylite_ledger.csv",
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        SettingRow(
+                            icon = Icons.Default.Share,
+                            title = "Export Ledger",
+                            subtitle = "Save transactions list to a CSV file",
+                            action = {
+                                Icon(
+                                    imageVector = Icons.Default.ChevronRight,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.outline
+                                )
+                            },
+                            onClick = null
+                        )
+                    }
 
                     // Import ledger row
                     FilePickerButton(
