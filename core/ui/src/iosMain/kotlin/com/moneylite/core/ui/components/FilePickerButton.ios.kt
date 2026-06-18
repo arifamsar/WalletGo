@@ -22,6 +22,7 @@ class DocumentPickerDelegate(
 ) : NSObject(), UIDocumentPickerDelegateProtocol {
     override fun documentPicker(controller: UIDocumentPickerViewController, didPickDocumentsAtURLs: List<*>) {
         val url = didPickDocumentsAtURLs.firstOrNull() as? NSURL ?: return
+        val shouldStopAccessing = url.startAccessingSecurityScopedResource()
         try {
             val content = NSString.stringWithContentsOfURL(url, NSUTF8StringEncoding, null)
             if (content != null) {
@@ -29,6 +30,10 @@ class DocumentPickerDelegate(
             }
         } catch (e: Exception) {
             // Fail-safe
+        } finally {
+            if (shouldStopAccessing) {
+                url.stopAccessingSecurityScopedResource()
+            }
         }
     }
 }
