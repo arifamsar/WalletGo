@@ -180,7 +180,8 @@ private fun SettingsAdaptivePreview() {
             onDarkModeChange = {},
             onShowClearDialogChange = {},
             onClearDatabase = {},
-            onExportLedger = {}
+            onExportLedger = {},
+            onImportLedger = {}
         )
     }
 }

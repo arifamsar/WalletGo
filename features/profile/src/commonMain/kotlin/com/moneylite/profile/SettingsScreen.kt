@@ -63,7 +63,10 @@ import com.moneylite.core.domain.repository.TransactionRepository
 import com.moneylite.core.data.service.UserPreferences
 import com.moneylite.core.data.service.shareText
 import com.moneylite.core.domain.usecase.ExportTransactionsUseCase
+import com.moneylite.core.domain.usecase.ImportTransactionsUseCase
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Upload
+import com.moneylite.core.ui.components.FilePickerButton
 import com.moneylite.core.ui.adaptive.AdaptiveWindowBox
 import com.moneylite.core.ui.adaptive.AdaptiveWindowClass
 import com.moneylite.core.ui.adaptive.isExpanded
@@ -80,11 +83,13 @@ fun SettingsScreen(
     val userPreferences = koinInject<UserPreferences>()
     val transactionRepository = koinInject<TransactionRepository>()
     val exportTransactionsUseCase = koinInject<ExportTransactionsUseCase>()
+    val importTransactionsUseCase = koinInject<ImportTransactionsUseCase>()
     val isDark by userPreferences.darkModeEnabledFlow().collectAsStateWithLifecycle(initialValue = false)
     val themeTemplate by userPreferences.themeTemplateFlow().collectAsStateWithLifecycle(initialValue = ThemeTemplate.Default)
     val coroutineScope = rememberCoroutineScope()
 
     var showClearDialog by remember { mutableStateOf(false) }
+    var importResultMessage by remember { mutableStateOf<String?>(null) }
 
     AdaptiveWindowBox(modifier = modifier) { windowClass ->
         SettingsScreenContent(
@@ -111,6 +116,33 @@ fun SettingsScreen(
                     val csvText = exportTransactionsUseCase()
                     shareText(csvText, "Export Ledger")
                 }
+            },
+            onImportLedger = { csvContent ->
+                coroutineScope.launch {
+                    importTransactionsUseCase(csvContent)
+                        .onSuccess { count ->
+                            importResultMessage = "Successfully imported $count transactions!"
+                        }
+                        .onFailure { error ->
+                            importResultMessage = "Import failed: ${error.message ?: "Unknown error"}"
+                        }
+                }
+            }
+        )
+    }
+
+    importResultMessage?.let { message ->
+        AlertDialog(
+            onDismissRequest = { importResultMessage = null },
+            title = { Text("Import Ledger") },
+            text = { Text(message) },
+            confirmButton = {
+                TextButton(
+                    shapes = ButtonDefaults.shapes(),
+                    onClick = { importResultMessage = null }
+                ) {
+                    Text("OK")
+                }
             }
         )
     }
@@ -128,6 +160,7 @@ fun SettingsScreenContent(
     onShowClearDialogChange: (Boolean) -> Unit,
     onClearDatabase: () -> Unit,
     onExportLedger: () -> Unit,
+    onImportLedger: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Scaffold(
@@ -267,6 +300,26 @@ fun SettingsScreenContent(
                         },
                         onClick = onExportLedger
                     )
+
+                    // Import ledger row
+                    FilePickerButton(
+                        onFileContentPicked = onImportLedger,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        SettingRow(
+                            icon = Icons.Default.Upload,
+                            title = "Import Ledger",
+                            subtitle = "Load transactions from a CSV file",
+                            action = {
+                                Icon(
+                                    imageVector = Icons.Default.ChevronRight,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.outline
+                                )
+                            },
+                            onClick = null
+                        )
+                    }
 
                     // Clear database row
                     SettingRow(

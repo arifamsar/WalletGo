@@ -1,8 +1,6 @@
 package com.moneylite.core.data.service
 
-import platform.UIKit.UIActivityViewController
-import platform.UIKit.UIApplication
-import platform.UIKit.UIWindow
+import platform.UIKit.*
 
 actual fun shareText(text: String, title: String) {
     val rootViewController = UIApplication.sharedApplication.keyWindow?.rootViewController
