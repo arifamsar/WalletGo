@@ -21,7 +21,7 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material.icons.filled.NotificationsNone
 import androidx.compose.material.icons.outlined.Notifications
@@ -62,7 +62,6 @@ import com.moneylite.core.ui.adaptive.AdaptiveWindowClass
 import com.moneylite.core.ui.adaptive.isExpanded
 import kotlin.time.Clock
 import kotlinx.datetime.DateTimeUnit
-import kotlinx.datetime.Instant as KxInstant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.minus
@@ -122,7 +121,7 @@ fun NotificationHistoryScreenContent(
                             onClick = onBack
                         ) {
                             Icon(
-                                imageVector = Icons.Default.ArrowBack,
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                                 contentDescription = stringResource(Res.string.back)
                             )
                         }
@@ -162,8 +161,7 @@ fun NotificationHistoryScreenContent(
             } else {
                 val grouped = remember(historyItems) {
                     historyItems.groupBy { item ->
-                        val localDateTime = KxInstant.fromEpochMilliseconds(item.timestamp.toEpochMilliseconds())
-                            .toLocalDateTime(TimeZone.currentSystemDefault())
+                        val localDateTime = item.timestamp.toLocalDateTime(TimeZone.currentSystemDefault())
                         localDateTime.date
                     }
                 }
@@ -193,8 +191,7 @@ fun NotificationHistoryScreenContent(
                             items = items,
                             key = { it.id }
                         ) { item ->
-                            val localTime = KxInstant.fromEpochMilliseconds(item.timestamp.toEpochMilliseconds())
-                                .toLocalDateTime(TimeZone.currentSystemDefault())
+                            val localTime = item.timestamp.toLocalDateTime(TimeZone.currentSystemDefault())
                                 .time
 
                             NotificationRowItem(

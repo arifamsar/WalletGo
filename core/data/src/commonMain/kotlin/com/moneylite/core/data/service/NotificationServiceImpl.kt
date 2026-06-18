@@ -13,11 +13,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
-import kotlin.time.Instant
 import kotlin.time.Clock
 import com.tweener.alarmee.model.RepeatInterval
 import com.moneylite.core.domain.model.RepeatIntervalType
-import kotlinx.datetime.Instant as KxInstant
+import kotlin.time.Instant
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.LocalDateTime
@@ -52,7 +51,7 @@ class NotificationServiceImpl(
                         id = uuid,
                         title = title,
                         body = body,
-                        timestamp = Instant.fromEpochMilliseconds(Clock.System.now().toEpochMilliseconds())
+                        timestamp = Clock.System.now()
                     )
                 )
             } catch (e: Exception) {
@@ -62,7 +61,7 @@ class NotificationServiceImpl(
     }
 
     override fun scheduleSingleNotification(id: String, title: String, body: String, scheduledTimeMillis: Long) {
-        val triggerTime = KxInstant.fromEpochMilliseconds(scheduledTimeMillis)
+        val triggerTime = Instant.fromEpochMilliseconds(scheduledTimeMillis)
             .toLocalDateTime(TimeZone.currentSystemDefault())
 
         alarmeeService.local.schedule(

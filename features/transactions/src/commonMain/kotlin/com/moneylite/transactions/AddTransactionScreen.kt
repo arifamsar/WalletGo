@@ -33,7 +33,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Notes
+import androidx.compose.material.icons.automirrored.filled.Notes
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DatePicker
@@ -433,7 +433,7 @@ fun AddTransactionScreenContent(
                 placeholder = { Text("Add any notes (optional)...") },
                 leadingIcon = {
                     Icon(
-                        imageVector = Icons.Default.Notes,
+                        imageVector = Icons.AutoMirrored.Filled.Notes,
                         contentDescription = "Notes",
                         tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
