@@ -61,6 +61,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.moneylite.core.domain.repository.TransactionRepository
 import com.moneylite.core.data.service.UserPreferences
+import com.moneylite.core.data.service.shareText
+import com.moneylite.core.domain.usecase.ExportTransactionsUseCase
+import androidx.compose.material.icons.filled.Share
 import com.moneylite.core.ui.adaptive.AdaptiveWindowBox
 import com.moneylite.core.ui.adaptive.AdaptiveWindowClass
 import com.moneylite.core.ui.adaptive.isExpanded
@@ -76,6 +79,7 @@ fun SettingsScreen(
 ) {
     val userPreferences = koinInject<UserPreferences>()
     val transactionRepository = koinInject<TransactionRepository>()
+    val exportTransactionsUseCase = koinInject<ExportTransactionsUseCase>()
     val isDark by userPreferences.darkModeEnabledFlow().collectAsStateWithLifecycle(initialValue = false)
     val themeTemplate by userPreferences.themeTemplateFlow().collectAsStateWithLifecycle(initialValue = ThemeTemplate.Default)
     val coroutineScope = rememberCoroutineScope()
@@ -101,6 +105,12 @@ fun SettingsScreen(
                     transactionRepository.deleteAllTransactions()
                 }
                 showClearDialog = false
+            },
+            onExportLedger = {
+                coroutineScope.launch {
+                    val csvText = exportTransactionsUseCase()
+                    shareText(csvText, "Export Ledger")
+                }
             }
         )
     }
@@ -117,6 +127,7 @@ fun SettingsScreenContent(
     onDarkModeChange: (Boolean) -> Unit,
     onShowClearDialogChange: (Boolean) -> Unit,
     onClearDatabase: () -> Unit,
+    onExportLedger: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Scaffold(
@@ -242,6 +253,21 @@ fun SettingsScreenContent(
                 )
             ) {
                 Column {
+                    // Export ledger row
+                    SettingRow(
+                        icon = Icons.Default.Share,
+                        title = "Export Ledger",
+                        subtitle = "Share transactions list as CSV",
+                        action = {
+                            Icon(
+                                imageVector = Icons.Default.ChevronRight,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.outline
+                            )
+                        },
+                        onClick = onExportLedger
+                    )
+
                     // Clear database row
                     SettingRow(
                         icon = Icons.Default.DeleteSweep,

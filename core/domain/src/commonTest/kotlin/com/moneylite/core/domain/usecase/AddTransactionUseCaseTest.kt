@@ -9,6 +9,7 @@ import com.moneylite.core.domain.repository.BudgetRepository
 import com.moneylite.core.domain.repository.CategoryBudgetRepository
 import com.moneylite.core.domain.repository.CategoryRepository
 import com.moneylite.core.domain.repository.TransactionRepository
+import com.moneylite.core.domain.repository.NotificationSettingsRepository
 import com.moneylite.core.domain.service.NotificationService
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
@@ -101,6 +102,10 @@ class FakeNotificationService : NotificationService {
 class FakeNotificationSettingsRepository : NotificationSettingsRepository {
     var notificationsEnabled = true
     var warningThreshold = 0.8f
+    var dailyReminderEnabled = true
+    var dailyReminderHour = 20
+    var scheduledAlertsEnabled = true
+    var weeklyReportEnabled = true
 
     override fun isNotificationsEnabledFlow(): Flow<Boolean> = flowOf(notificationsEnabled)
     override suspend fun isNotificationsEnabled(): Boolean = notificationsEnabled
@@ -109,6 +114,22 @@ class FakeNotificationSettingsRepository : NotificationSettingsRepository {
     override fun getWarningThresholdFlow(): Flow<Float> = flowOf(warningThreshold)
     override suspend fun getWarningThreshold(): Float = warningThreshold
     override suspend fun setWarningThreshold(threshold: Float) { warningThreshold = threshold }
+
+    override fun isDailyReminderEnabledFlow(): Flow<Boolean> = flowOf(dailyReminderEnabled)
+    override suspend fun isDailyReminderEnabled(): Boolean = dailyReminderEnabled
+    override suspend fun setDailyReminderEnabled(enabled: Boolean) { dailyReminderEnabled = enabled }
+
+    override fun getDailyReminderHourFlow(): Flow<Int> = flowOf(dailyReminderHour)
+    override suspend fun getDailyReminderHour(): Int = dailyReminderHour
+    override suspend fun setDailyReminderHour(hour: Int) { dailyReminderHour = hour }
+
+    override fun isScheduledAlertsEnabledFlow(): Flow<Boolean> = flowOf(scheduledAlertsEnabled)
+    override suspend fun isScheduledAlertsEnabled(): Boolean = scheduledAlertsEnabled
+    override suspend fun setScheduledAlertsEnabled(enabled: Boolean) { scheduledAlertsEnabled = enabled }
+
+    override fun isWeeklyReportEnabledFlow(): Flow<Boolean> = flowOf(weeklyReportEnabled)
+    override suspend fun isWeeklyReportEnabled(): Boolean = weeklyReportEnabled
+    override suspend fun setWeeklyReportEnabled(enabled: Boolean) { weeklyReportEnabled = enabled }
 }
 
 class AddTransactionUseCaseTest {

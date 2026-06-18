@@ -18,6 +18,7 @@ import com.moneylite.core.domain.repository.NotificationSettingsRepository
 import com.moneylite.core.data.repository.NotificationSettingsRepositoryImpl
 import com.moneylite.core.domain.usecase.GetNotificationHistoryUseCase
 import com.moneylite.core.domain.usecase.ClearNotificationHistoryUseCase
+import com.moneylite.core.domain.usecase.ExportTransactionsUseCase
 import org.koin.dsl.module
 
 val databaseModule = module {
@@ -47,5 +48,6 @@ val databaseModule = module {
     single { com.moneylite.core.domain.usecase.GetCategoryBudgetProgressUseCase(get(), get(), get()) }
     single { GetNotificationHistoryUseCase(get()) }
     single { ClearNotificationHistoryUseCase(get()) }
+    single { ExportTransactionsUseCase(get(), get()) }
 }
 

@@ -4,7 +4,7 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 
-private lateinit var applicationContext: Context
+internal lateinit var applicationContext: Context
 
 fun initPreferencesDataStore(context: Context) {
     applicationContext = context
