@@ -7,6 +7,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import android.util.Log
+import android.widget.Toast
+import java.io.IOException
 
 @Composable
 actual fun FileSaverButton(
@@ -19,14 +22,31 @@ actual fun FileSaverButton(
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("text/csv")
     ) { uri ->
-        uri?.let {
-            onRequestFileContent { contentText ->
-                try {
-                    context.contentResolver.openOutputStream(uri)?.use { outputStream ->
-                        outputStream.write(contentText.toByteArray())
-                    }
-                } catch (e: Exception) {
-                    // Fail-safe
+        if (uri == null) {
+            Log.d("FileSaver", "Saver cancelled: returned URI is null")
+            return@rememberLauncherForActivityResult
+        }
+        
+        Log.d("FileSaver", "Saving file to URI: $uri")
+        onRequestFileContent { contentText ->
+            try {
+                val contentResolver = context.contentResolver
+                val outputStream = contentResolver.openOutputStream(uri)
+                    ?: throw IOException("Could not open output stream for destination URI: $uri")
+                
+                outputStream.use { stream ->
+                    stream.write(contentText.toByteArray(Charsets.UTF_8))
+                }
+                Log.d("FileSaver", "Successfully wrote ${contentText.length} characters (UTF-8 bytes) to $uri")
+                
+            } catch (e: Exception) {
+                Log.e("FileSaver", "Failed to write file content", e)
+                android.os.Handler(android.os.Looper.getMainLooper()).post {
+                    Toast.makeText(
+                        context,
+                        "Failed to save file: ${e.localizedMessage ?: e.message ?: "Unknown error"}",
+                        Toast.LENGTH_LONG
+                    ).show()
                 }
             }
         }
@@ -34,7 +54,16 @@ actual fun FileSaverButton(
 
     Box(
         modifier = modifier.clickable {
-            launcher.launch(fileName)
+            try {
+                launcher.launch(fileName)
+            } catch (e: Exception) {
+                Log.e("FileSaver", "Failed to launch save dialog", e)
+                Toast.makeText(
+                    context,
+                    "Failed to save file: ${e.message}",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
         }
     ) {
         content()

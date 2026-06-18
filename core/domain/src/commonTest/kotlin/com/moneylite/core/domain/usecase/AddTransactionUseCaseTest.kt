@@ -63,6 +63,7 @@ class FakeCategoryRepository : CategoryRepository {
     override suspend fun insertCategory(category: Category) { categories = categories + category }
     override suspend fun deleteCategory(id: String) { categories = categories.filter { it.id != id } }
     override suspend fun seedDefaultCategories() {}
+    override suspend fun deleteAllCategories() { categories = emptyList() }
 }
 
 class FakeNotificationService : NotificationService {

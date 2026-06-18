@@ -63,6 +63,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.moneylite.core.domain.repository.TransactionRepository
+import com.moneylite.core.domain.repository.CategoryRepository
 import com.moneylite.core.data.service.UserPreferences
 import com.moneylite.core.data.service.shareText
 import com.moneylite.core.domain.usecase.ExportTransactionsUseCase
@@ -86,6 +87,7 @@ fun SettingsScreen(
 ) {
     val userPreferences = koinInject<UserPreferences>()
     val transactionRepository = koinInject<TransactionRepository>()
+    val categoryRepository = koinInject<CategoryRepository>()
     val exportTransactionsUseCase = koinInject<ExportTransactionsUseCase>()
     val importTransactionsUseCase = koinInject<ImportTransactionsUseCase>()
     val isDark by userPreferences.darkModeEnabledFlow().collectAsStateWithLifecycle(initialValue = false)
@@ -113,6 +115,8 @@ fun SettingsScreen(
             onClearDatabase = {
                 coroutineScope.launch {
                     transactionRepository.deleteAllTransactions()
+                    categoryRepository.deleteAllCategories()
+                    categoryRepository.seedDefaultCategories()
                     snackbarHostState.showSnackbar("Database cleared successfully!")
                 }
                 showClearDialog = false

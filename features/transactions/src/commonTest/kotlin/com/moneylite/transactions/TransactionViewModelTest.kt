@@ -196,6 +196,9 @@ private class FakeCategoryRepository(
     }
 
     override suspend fun seedDefaultCategories() = Unit
+    override suspend fun deleteAllCategories() {
+        categories.value = emptyList()
+    }
 }
 
 private val defaultCategories = listOf(

@@ -34,6 +34,7 @@ class ExportTransactionsUseCaseTest {
         override suspend fun insertCategory(category: Category) {}
         override suspend fun deleteCategory(id: String) {}
         override suspend fun seedDefaultCategories() {}
+        override suspend fun deleteAllCategories() { categories = emptyList() }
     }
 
     @Test
@@ -71,10 +72,18 @@ class ExportTransactionsUseCaseTest {
         val exportUseCase = ExportTransactionsUseCase(txRepository, catRepository)
         val csvResult = exportUseCase()
 
-        val expectedHeader = "Date,Type,Category,Amount,Note\n"
-        val expectedRow1 = "2026-06-19,Income,Salary,1000000,\"Monthly Salary \"\"June\"\"\"\n"
-        val expectedRow2 = "2026-06-18,Expense,Food,50000,\"Lunch, Starbucks\"\n"
+        val expected = buildString {
+            append("=== Categories ===\n")
+            append("id,name,icon,colorKey,type,isDefault\n")
+            append("food,Food,restaurant,#FF9800,Expense,true\n")
+            append("salary,Salary,attach_money,#4CAF50,Income,true\n")
+            append("\n")
+            append("=== Transactions ===\n")
+            append("date,type,categoryId,amount,note\n")
+            append("2026-06-19,Income,salary,1000000,\"Monthly Salary \"\"June\"\"\"\n")
+            append("2026-06-18,Expense,food,50000,\"Lunch, Starbucks\"\n")
+        }
 
-        assertEquals(expectedHeader + expectedRow1 + expectedRow2, csvResult)
+        assertEquals(expected, csvResult)
     }
 }

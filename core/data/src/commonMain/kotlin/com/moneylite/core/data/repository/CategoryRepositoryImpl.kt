@@ -45,5 +45,9 @@ class CategoryRepositoryImpl(
             )
             categoryDao.insertCategories(defaults.map { it.toEntity() })
         }
+     }
+
+    override suspend fun deleteAllCategories() {
+        categoryDao.deleteAllCategories()
     }
 }

@@ -132,4 +132,7 @@ private class AddTransactionFakeCategoryRepository : CategoryRepository {
     }
 
     override suspend fun seedDefaultCategories() = Unit
+    override suspend fun deleteAllCategories() {
+        categories.value = emptyList()
+    }
 }

@@ -9,4 +9,5 @@ interface CategoryRepository {
     suspend fun insertCategory(category: Category)
     suspend fun deleteCategory(id: String)
     suspend fun seedDefaultCategories()
+    suspend fun deleteAllCategories()
 }
