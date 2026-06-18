@@ -12,10 +12,14 @@ import platform.UIKit.UIDocumentPickerMode
 import platform.UIKit.UIApplication
 import platform.UIKit.UIWindow
 import platform.Foundation.NSURL
-import platform.Foundation.NSUTF8StringEncoding
-import platform.Foundation.NSString
-import platform.Foundation.stringWithContentsOfURL
+import platform.Foundation.NSData
+import platform.Foundation.dataWithContentsOfURL
 import platform.darwin.NSObject
+import kotlinx.cinterop.reinterpret
+import kotlinx.cinterop.ByteVar
+import kotlinx.cinterop.addressOf
+import kotlinx.cinterop.usePinned
+import platform.posix.memcpy
 
 class DocumentPickerDelegate(
     private val onPicked: (String) -> Unit
@@ -24,12 +28,27 @@ class DocumentPickerDelegate(
         val url = didPickDocumentsAtURLs.firstOrNull() as? NSURL ?: return
         val shouldStopAccessing = url.startAccessingSecurityScopedResource()
         try {
-            val content = NSString.stringWithContentsOfURL(url, NSUTF8StringEncoding, null)
-            if (content != null) {
-                onPicked(content)
+            println("FilePickerButton: Picked file URL = ${url.absoluteString}")
+            val nsData = NSData.dataWithContentsOfURL(url)
+            if (nsData != null) {
+                val length = nsData.length.toInt()
+                val bytes = nsData.bytes?.reinterpret<ByteVar>()
+                if (bytes != null && length > 0) {
+                    val byteArray = ByteArray(length)
+                    byteArray.usePinned { pinned ->
+                        memcpy(pinned.addressOf(0), bytes, nsData.length)
+                    }
+                    val content = byteArray.decodeToString()
+                    println("FilePickerButton: Successfully read $length bytes")
+                    onPicked(content)
+                } else {
+                    println("FilePickerButton: Bytes or length is null/empty")
+                }
+            } else {
+                println("FilePickerButton: NSData.dataWithContentsOfURL returned null")
             }
         } catch (e: Exception) {
-            // Fail-safe
+            println("FilePickerButton ERROR: ${e.message}")
         } finally {
             if (shouldStopAccessing) {
                 url.stopAccessingSecurityScopedResource()
