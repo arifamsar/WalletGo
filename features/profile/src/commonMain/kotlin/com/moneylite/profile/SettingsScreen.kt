@@ -39,6 +39,9 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
@@ -90,7 +93,8 @@ fun SettingsScreen(
     val coroutineScope = rememberCoroutineScope()
 
     var showClearDialog by remember { mutableStateOf(false) }
-    var importResultMessage by remember { mutableStateOf<String?>(null) }
+    val snackbarHostState = remember { SnackbarHostState() }
+    var isImporting by remember { mutableStateOf(false) }
 
     AdaptiveWindowBox(modifier = modifier) { windowClass ->
         SettingsScreenContent(
@@ -109,42 +113,41 @@ fun SettingsScreen(
             onClearDatabase = {
                 coroutineScope.launch {
                     transactionRepository.deleteAllTransactions()
+                    snackbarHostState.showSnackbar("Database cleared successfully!")
                 }
                 showClearDialog = false
             },
             onExportLedger = { onReady ->
                 coroutineScope.launch {
-                    val csvText = exportTransactionsUseCase()
-                    onReady(csvText)
+                    try {
+                        val csvText = exportTransactionsUseCase()
+                        onReady(csvText)
+                        snackbarHostState.showSnackbar("Ledger exported successfully!")
+                    } catch (e: Exception) {
+                        snackbarHostState.showSnackbar("Export failed: ${e.message ?: "Unknown error"}")
+                    }
                 }
             },
             onImportLedger = { csvContent ->
                 coroutineScope.launch {
-                    importTransactionsUseCase(csvContent)
-                        .onSuccess { count ->
-                            importResultMessage = "Successfully imported $count transactions!"
-                        }
-                        .onFailure { error ->
-                            importResultMessage = "Import failed: ${error.message ?: "Unknown error"}"
-                        }
+                    isImporting = true
+                    try {
+                        importTransactionsUseCase(csvContent)
+                            .onSuccess { count ->
+                                snackbarHostState.showSnackbar("Successfully imported $count transactions!")
+                            }
+                            .onFailure { error ->
+                                snackbarHostState.showSnackbar("Import failed: ${error.message ?: "Unknown error"}")
+                            }
+                    } catch (e: Exception) {
+                        snackbarHostState.showSnackbar("Import failed: ${e.message ?: "Unknown error"}")
+                    } finally {
+                        isImporting = false
+                    }
                 }
-            }
-        )
-    }
-
-    importResultMessage?.let { message ->
-        AlertDialog(
-            onDismissRequest = { importResultMessage = null },
-            title = { Text("Import Ledger") },
-            text = { Text(message) },
-            confirmButton = {
-                TextButton(
-                    shapes = ButtonDefaults.shapes(),
-                    onClick = { importResultMessage = null }
-                ) {
-                    Text("OK")
-                }
-            }
+            },
+            snackbarHostState = snackbarHostState,
+            isImporting = isImporting
         )
     }
 }
@@ -162,9 +165,13 @@ fun SettingsScreenContent(
     onClearDatabase: () -> Unit,
     onExportLedger: ((String) -> Unit) -> Unit,
     onImportLedger: (String) -> Unit,
+    snackbarHostState: SnackbarHostState,
+    isImporting: Boolean,
     modifier: Modifier = Modifier
 ) {
-    Scaffold(
+    Box(modifier = modifier.fillMaxSize()) {
+        Scaffold(
+            snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = {
@@ -376,6 +383,19 @@ fun SettingsScreenContent(
                 }
             }
         }
+        }
+        }
+
+        if (isImporting) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.5f))
+                    .clickable(enabled = false) {},
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator()
+            }
         }
     }
 

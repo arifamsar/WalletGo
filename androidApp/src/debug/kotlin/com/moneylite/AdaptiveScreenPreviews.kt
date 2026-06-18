@@ -181,7 +181,9 @@ private fun SettingsAdaptivePreview() {
             onShowClearDialogChange = {},
             onClearDatabase = {},
             onExportLedger = { _ -> },
-            onImportLedger = {}
+            onImportLedger = {},
+            snackbarHostState = androidx.compose.material3.SnackbarHostState(),
+            isImporting = false
         )
     }
 }
