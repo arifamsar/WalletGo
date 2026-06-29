@@ -301,13 +301,13 @@ fun SettingsScreenContent(
                     // Export ledger row
                     FileSaverButton(
                         onRequestFileContent = onExportLedger,
-                        fileName = "moneylite_ledger.csv",
+                        fileName = "moneylite_ledger.json",
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         SettingRow(
                             icon = Icons.Default.Share,
                             title = "Export Ledger",
-                            subtitle = "Save transactions list to a CSV file",
+                            subtitle = "Save transactions list to a JSON file",
                             action = {
                                 Icon(
                                     imageVector = Icons.Default.ChevronRight,
@@ -327,7 +327,7 @@ fun SettingsScreenContent(
                         SettingRow(
                             icon = Icons.Default.Upload,
                             title = "Import Ledger",
-                            subtitle = "Load transactions from a CSV file",
+                            subtitle = "Load transactions from a JSON file",
                             action = {
                                 Icon(
                                     imageVector = Icons.Default.ChevronRight,

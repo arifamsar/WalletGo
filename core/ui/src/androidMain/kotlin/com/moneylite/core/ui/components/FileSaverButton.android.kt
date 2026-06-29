@@ -20,7 +20,7 @@ actual fun FileSaverButton(
 ) {
     val context = LocalContext.current
     val launcher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("text/csv")
+        contract = ActivityResultContracts.CreateDocument("application/json")
     ) { uri ->
         if (uri == null) {
             Log.d("FileSaver", "Saver cancelled: returned URI is null")
