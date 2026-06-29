@@ -104,6 +104,13 @@ fun TransactionScreen(
                         }
                     }
                 }
+                is TransactionListEffect.Error -> {
+                    snackbarHostState.showSnackbar(
+                        message = effect.message,
+                        withDismissAction = true,
+                        duration = SnackbarDuration.Short
+                    )
+                }
             }
         }
     }

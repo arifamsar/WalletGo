@@ -28,4 +28,5 @@ sealed interface TransactionListIntent {
 
 sealed interface TransactionListEffect {
     data class TransactionDeleted(val id: String) : TransactionListEffect
+    data class Error(val message: String) : TransactionListEffect
 }

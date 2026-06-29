@@ -74,10 +74,14 @@ class TransactionViewModel(
         _uiState.value = _uiState.value.copy(deleteCandidate = null)
 
         viewModelScope.launch {
-            val transaction = transactionRepository.getTransactionById(candidate.id) ?: return@launch
-            transactionRepository.deleteTransaction(candidate.id)
-            pendingUndoTransactions[candidate.id] = transaction
-            _effects.emit(TransactionListEffect.TransactionDeleted(candidate.id))
+            try {
+                val transaction = transactionRepository.getTransactionById(candidate.id) ?: return@launch
+                transactionRepository.deleteTransaction(candidate.id)
+                pendingUndoTransactions[candidate.id] = transaction
+                _effects.emit(TransactionListEffect.TransactionDeleted(candidate.id))
+            } catch (e: Exception) {
+                _effects.emit(TransactionListEffect.Error("Failed to delete transaction: ${e.message}"))
+            }
         }
     }
 
@@ -85,7 +89,11 @@ class TransactionViewModel(
         val transaction = pendingUndoTransactions.remove(id) ?: return
 
         viewModelScope.launch {
-            transactionRepository.insertTransaction(transaction)
+            try {
+                transactionRepository.insertTransaction(transaction)
+            } catch (e: Exception) {
+                _effects.emit(TransactionListEffect.Error("Failed to restore transaction: ${e.message}"))
+            }
         }
     }
 
