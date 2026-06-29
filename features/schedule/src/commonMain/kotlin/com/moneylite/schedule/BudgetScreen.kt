@@ -125,6 +125,13 @@ fun BudgetScreen(
                         }
                     }
                 }
+                is BudgetEffect.Error -> {
+                    snackbarHostState.showSnackbar(
+                        message = effect.message,
+                        withDismissAction = true,
+                        duration = SnackbarDuration.Short
+                    )
+                }
             }
         }
     }

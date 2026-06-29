@@ -24,6 +24,7 @@ import kotlinx.datetime.toLocalDateTime
 
 sealed interface BudgetEffect {
     data class CategoryBudgetDeleted(val categoryId: String, val categoryName: String) : BudgetEffect
+    data class Error(val message: String) : BudgetEffect
 }
 
 class BudgetViewModel(
@@ -114,13 +115,21 @@ class BudgetViewModel(
 
     fun updateBudgetLimit(limit: Long) {
         viewModelScope.launch {
-            budgetRepository.setBudgetLimit(_selectedMonth.value, _selectedYear.value, limit)
+            try {
+                budgetRepository.setBudgetLimit(_selectedMonth.value, _selectedYear.value, limit)
+            } catch (e: Exception) {
+                _effects.emit(BudgetEffect.Error("Failed to update budget limit: ${e.message}"))
+            }
         }
     }
 
     fun updateCategoryBudgetLimit(categoryId: String, limit: Long) {
         viewModelScope.launch {
-            categoryBudgetRepository.setCategoryBudgetLimit(categoryId, _selectedMonth.value, _selectedYear.value, limit)
+            try {
+                categoryBudgetRepository.setCategoryBudgetLimit(categoryId, _selectedMonth.value, _selectedYear.value, limit)
+            } catch (e: Exception) {
+                _effects.emit(BudgetEffect.Error("Failed to update category budget limit: ${e.message}"))
+            }
         }
     }
 
@@ -139,16 +148,24 @@ class BudgetViewModel(
             val m = _selectedMonth.value
             val y = _selectedYear.value
             val id = "${candidate.categoryId}-${y}-${m}"
-            categoryBudgetRepository.deleteCategoryBudget(id)
-            pendingUndoCategoryBudgets[candidate.categoryId] = candidate.limitAmount
-            _effects.emit(BudgetEffect.CategoryBudgetDeleted(candidate.categoryId, candidate.categoryName))
+            try {
+                categoryBudgetRepository.deleteCategoryBudget(id)
+                pendingUndoCategoryBudgets[candidate.categoryId] = candidate.limitAmount
+                _effects.emit(BudgetEffect.CategoryBudgetDeleted(candidate.categoryId, candidate.categoryName))
+            } catch (e: Exception) {
+                _effects.emit(BudgetEffect.Error("Failed to delete category budget: ${e.message}"))
+            }
         }
     }
 
     fun undoDeleteCategoryBudget(categoryId: String) {
         val limit = pendingUndoCategoryBudgets.remove(categoryId) ?: return
         viewModelScope.launch {
-            categoryBudgetRepository.setCategoryBudgetLimit(categoryId, _selectedMonth.value, _selectedYear.value, limit)
+            try {
+                categoryBudgetRepository.setCategoryBudgetLimit(categoryId, _selectedMonth.value, _selectedYear.value, limit)
+            } catch (e: Exception) {
+                _effects.emit(BudgetEffect.Error("Failed to restore category budget limit: ${e.message}"))
+            }
         }
     }
 
