@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.edit
 import com.moneylite.core.ui.theme.ThemeTemplate
 import kotlinx.coroutines.flow.Flow
@@ -173,6 +174,20 @@ class UserPreferences(private val dataStore: DataStore<Preferences>) {
     fun weeklyReportEnabledFlow(): Flow<Boolean> =
         dataStore.data.map { preferences -> preferences[weekly_report_enabled] ?: true }
 
+    suspend fun setUserSalary(salary: Long) {
+        dataStore.edit { preferences ->
+            preferences[user_salary] = salary
+        }
+    }
+
+    suspend fun getUserSalary(): Long {
+        val preferences = dataStore.data.first()
+        return preferences[user_salary] ?: 0L
+    }
+
+    fun userSalaryFlow(): Flow<Long> =
+        dataStore.data.map { preferences -> preferences[user_salary] ?: 0L }
+
     companion object {
         val onboarding_completed = booleanPreferencesKey("onboarding_completed")
         val is_logged_in = booleanPreferencesKey("is_logged_in")
@@ -180,6 +195,7 @@ class UserPreferences(private val dataStore: DataStore<Preferences>) {
         val theme_template = stringPreferencesKey("theme_template")
         val user_name = stringPreferencesKey("user_name")
         val user_job = stringPreferencesKey("user_job")
+        val user_salary = longPreferencesKey("user_salary")
         val notifications_enabled = booleanPreferencesKey("notifications_enabled")
         val warning_threshold = floatPreferencesKey("warning_threshold")
         val daily_reminder_enabled = booleanPreferencesKey("daily_reminder_enabled")

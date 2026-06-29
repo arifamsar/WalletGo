@@ -68,6 +68,10 @@ import com.moneylite.core.ui.components.AppDialog
 import org.koin.compose.viewmodel.koinViewModel
 import org.jetbrains.compose.resources.stringResource
 import com.moneylite.core.ui.generated.resources.*
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
+import com.moneylite.core.domain.model.formatToRupiah
+
 
 data class ProfileMenuItem(
     val title: String,
@@ -87,12 +91,14 @@ fun ProfileScreen(
     val darkModeEnabled by viewModel.darkModeEnabled.collectAsStateWithLifecycle()
     val userName by viewModel.userName.collectAsStateWithLifecycle()
     val userJob by viewModel.userJob.collectAsStateWithLifecycle()
+    val userSalary by viewModel.userSalary.collectAsStateWithLifecycle()
     var showEditProfileDialog by remember { mutableStateOf(false) }
 
     AdaptiveWindowBox(modifier = modifier) { windowClass ->
         ProfileScreenContent(
             userName = userName,
             userJob = userJob,
+            userSalary = userSalary,
             darkModeEnabled = darkModeEnabled,
             showEditProfileDialog = showEditProfileDialog,
             windowClass = windowClass,
@@ -108,12 +114,13 @@ fun ProfileScreen(
 fun ProfileScreenContent(
     userName: String,
     userJob: String,
+    userSalary: Long,
     darkModeEnabled: Boolean,
     showEditProfileDialog: Boolean,
     windowClass: AdaptiveWindowClass,
     onDarkModeChange: (Boolean) -> Unit,
     onShowEditProfileDialogChange: (Boolean) -> Unit,
-    onUpdateProfile: (String, String) -> Unit,
+    onUpdateProfile: (String, String, Long) -> Unit,
     modifier: Modifier = Modifier,
     onNavigate: (Route) -> Unit = {}
 ) {
@@ -198,6 +205,7 @@ fun ProfileScreenContent(
                     ProfileCard(
                         userName = userName,
                         userJob = userJob,
+                        userSalary = userSalary,
                         onEditClick = { onShowEditProfileDialogChange(true) }
                     )
                 }
@@ -243,13 +251,15 @@ fun ProfileScreenContent(
     if (showEditProfileDialog) {
         var tempName by remember { mutableStateOf(userName) }
         var tempJob by remember { mutableStateOf(userJob) }
+        var tempSalary by remember { mutableStateOf(userSalary.toString()) }
 
         AppDialog(
             title = stringResource(Res.string.edit_profile),
             confirmText = stringResource(Res.string.save),
             onConfirm = {
-                if (tempName.isNotBlank() && tempJob.isNotBlank()) {
-                    onUpdateProfile(tempName, tempJob)
+                if (tempName.isNotBlank() && tempJob.isNotBlank() && tempSalary.isNotBlank()) {
+                    val salaryLong = tempSalary.toLongOrNull() ?: 0L
+                    onUpdateProfile(tempName, tempJob, salaryLong)
                     onShowEditProfileDialogChange(false)
                 }
             },
@@ -273,6 +283,19 @@ fun ProfileScreenContent(
                         onValueChange = { tempJob = it },
                         label = { Text(stringResource(Res.string.job)) },
                         singleLine = true,
+                        shape = MaterialTheme.shapes.medium,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    OutlinedTextField(
+                        value = tempSalary,
+                        onValueChange = { input -> 
+                            if (input.all { it.isDigit() }) {
+                                tempSalary = input
+                            }
+                        },
+                        label = { Text(stringResource(Res.string.monthly_salary)) },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         shape = MaterialTheme.shapes.medium,
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -314,6 +337,7 @@ private fun SettingsSection(
 private fun ProfileCard(
     userName: String,
     userJob: String,
+    userSalary: Long,
     onEditClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -363,7 +387,7 @@ private fun ProfileCard(
                 )
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                    text = userJob,
+                    text = "$userJob • ${userSalary.formatToRupiah()}",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.72f)
                 )

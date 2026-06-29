@@ -20,6 +20,9 @@ class ProfileViewModel(private val userPreferences: UserPreferences): ViewModel(
     private val _userJob = MutableStateFlow("Freelancer")
     val userJob: StateFlow<String> = _userJob.asStateFlow()
 
+    private val _userSalary = MutableStateFlow(0L)
+    val userSalary: StateFlow<Long> = _userSalary.asStateFlow()
+
     init {
         viewModelScope.launch {
             userPreferences.darkModeEnabledFlow().collectLatest { enabled ->
@@ -36,6 +39,11 @@ class ProfileViewModel(private val userPreferences: UserPreferences): ViewModel(
                 _userJob.value = job
             }
         }
+        viewModelScope.launch {
+            userPreferences.userSalaryFlow().collectLatest { salary ->
+                _userSalary.value = salary
+            }
+        }
     }
 
     fun toggleDarkMode(enabled: Boolean) {
@@ -45,10 +53,11 @@ class ProfileViewModel(private val userPreferences: UserPreferences): ViewModel(
         }
     }
 
-    fun updateProfile(name: String, job: String) {
+    fun updateProfile(name: String, job: String, salary: Long) {
         viewModelScope.launch {
             userPreferences.setUserName(name)
             userPreferences.setUserJob(job)
+            userPreferences.setUserSalary(salary)
         }
     }
 }

@@ -132,4 +132,14 @@
     <string name="currency_idr">Rp (IDR)</string>
     <string name="data_management">Data Management</string>
     <string name="app_tagline_offline">MoneyLite v%1$s • Offline-First</string>
+    <string name="monthly_salary">Monthly Salary</string>
+    <string name="monthly_salary_subtitle">Used to budget and track your expenses</string>
+    <string name="salary_label">Monthly Salary (IDR)</string>
+    <string name="onboarding_profile_title">Create Profile</string>
+    <string name="onboarding_profile_description">Tell us a bit about yourself to customize your experience.</string>
+    <string name="onboarding_salary_title">Monthly Income</string>
+    <string name="onboarding_salary_description">Set your monthly salary to manage your budget limit.</string>
+    <string name="salary_required">Monthly salary is required</string>
+    <string name="name_required">Name is required</string>
+    <string name="job_required">Job/Role is required</string>
 </resources>

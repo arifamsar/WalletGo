@@ -139,12 +139,13 @@ private fun ProfileCompactPreview() {
         ProfileScreenContent(
             userName = "User",
             userJob = "Freelancer",
+            userSalary = 10000000L,
             darkModeEnabled = false,
             showEditProfileDialog = false,
             windowClass = AdaptiveWindowClass.Compact,
             onDarkModeChange = {},
             onShowEditProfileDialogChange = {},
-            onUpdateProfile = { _, _ -> }
+            onUpdateProfile = { _, _, _ -> }
         )
     }
 }
@@ -156,12 +157,13 @@ private fun ProfileExpandedPreview() {
         ProfileScreenContent(
             userName = "User",
             userJob = "Freelancer",
+            userSalary = 10000000L,
             darkModeEnabled = false,
             showEditProfileDialog = false,
             windowClass = AdaptiveWindowClass.Expanded,
             onDarkModeChange = {},
             onShowEditProfileDialogChange = {},
-            onUpdateProfile = { _, _ -> }
+            onUpdateProfile = { _, _, _ -> }
         )
     }
 }

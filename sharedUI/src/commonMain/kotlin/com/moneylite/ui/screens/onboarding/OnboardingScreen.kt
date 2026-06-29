@@ -16,12 +16,22 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.SmartToy
 import androidx.compose.material.icons.filled.WbSunny
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Payments
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
+import com.moneylite.core.ui.components.AppTextField
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.runtime.remember
+import com.moneylite.core.ui.components.RupiahAmountVisualTransformation
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -51,18 +61,8 @@ import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
-import com.moneylite.core.ui.generated.resources.Res
-import com.moneylite.core.ui.generated.resources.get_started
-import com.moneylite.core.ui.generated.resources.next
-import com.moneylite.core.ui.generated.resources.onboarding_description_1
-import com.moneylite.core.ui.generated.resources.onboarding_description_2
-import com.moneylite.core.ui.generated.resources.onboarding_description_3
-import com.moneylite.core.ui.generated.resources.skip
-import com.moneylite.core.ui.generated.resources.smart_scheduling
-import com.moneylite.core.ui.generated.resources.stay_notified
-import com.moneylite.core.ui.generated.resources.switch_to_dark_mode
-import com.moneylite.core.ui.generated.resources.switch_to_light_mode
-import com.moneylite.core.ui.generated.resources.welcome_to_app
+import androidx.compose.material.icons.Icons
+import com.moneylite.core.ui.generated.resources.*
 
 data class OnboardingPage(
     val icon: ImageVector,
@@ -70,23 +70,11 @@ data class OnboardingPage(
     val description: StringResource
 )
 
-private val onboardingPages = listOf(
-    OnboardingPage(
-        icon = Icons.Default.SmartToy,
-        title = Res.string.welcome_to_app,
-        description = Res.string.onboarding_description_1
-    ),
-    OnboardingPage(
-        icon = Icons.Default.CalendarMonth,
-        title = Res.string.smart_scheduling,
-        description = Res.string.onboarding_description_2
-    ),
-    OnboardingPage(
-        icon = Icons.Default.Notifications,
-        title = Res.string.stay_notified,
-        description = Res.string.onboarding_description_3
-    )
-)
+sealed interface OnboardingStep {
+    data class Info(val page: OnboardingPage) : OnboardingStep
+    data object ProfileSetup : OnboardingStep
+    data object SalarySetup : OnboardingStep
+}
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -95,7 +83,35 @@ fun OnboardingScreen(
     onOnboardingComplete: () -> Unit
 ) {
 
-    val pagerState = rememberPagerState(pageCount = { onboardingPages.size })
+    val onboardingPages = remember {
+        listOf(
+            OnboardingPage(
+                icon = Icons.Default.SmartToy,
+                title = Res.string.welcome_to_app,
+                description = Res.string.onboarding_description_1
+            ),
+            OnboardingPage(
+                icon = Icons.Default.CalendarMonth,
+                title = Res.string.smart_scheduling,
+                description = Res.string.onboarding_description_2
+            ),
+            OnboardingPage(
+                icon = Icons.Default.Notifications,
+                title = Res.string.stay_notified,
+                description = Res.string.onboarding_description_3
+            )
+        )
+    }
+
+    val steps = remember(onboardingPages) {
+        buildList {
+            addAll(onboardingPages.map { OnboardingStep.Info(it) })
+            add(OnboardingStep.ProfileSetup)
+            add(OnboardingStep.SalarySetup)
+        }
+    }
+
+    val pagerState = rememberPagerState(pageCount = { steps.size })
     val coroutineScope = rememberCoroutineScope()
     val viewModel = koinViewModel<OnboardingViewModel>()
     
@@ -120,7 +136,7 @@ fun OnboardingScreen(
                 title = {},
                 actions = {
                     AnimatedVisibility(
-                        visible = pagerState.currentPage < onboardingPages.size - 1,
+                        visible = steps[pagerState.currentPage] is OnboardingStep.Info,
                         enter = fadeIn(),
                         exit = fadeOut()
                     ) {
@@ -179,9 +195,11 @@ fun OnboardingScreen(
                         .weight(1f)
                         .fillMaxWidth()
                 ) { page ->
-                    OnboardingPageContent(
-                        page = onboardingPages[page]
-                    )
+                    when (val step = steps[page]) {
+                        is OnboardingStep.Info -> OnboardingPageContent(page = step.page)
+                        OnboardingStep.ProfileSetup -> ProfileSetupScreenContent(state = state, onEvent = viewModel::onEvent)
+                        OnboardingStep.SalarySetup -> SalarySetupScreenContent(state = state, onEvent = viewModel::onEvent)
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(32.dp))
@@ -197,24 +215,46 @@ fun OnboardingScreen(
                 Spacer(modifier = Modifier.height(48.dp))
 
                 // Navigation buttons
-                if (pagerState.currentPage == onboardingPages.size - 1) {
-                    AppPrimaryButton(
-                        text = stringResource(Res.string.get_started),
-                        onClick = {
-                             viewModel.onEvent(OnboardingEvent.CompleteOnboarding)
-                        },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                } else {
-                    AppPrimaryButton(
-                        text = stringResource(Res.string.next),
-                        onClick = {
-                            coroutineScope.launch {
-                                pagerState.animateScrollToPage(pagerState.currentPage + 1)
-                            }
-                        },
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                val isLastPage = pagerState.currentPage == steps.lastIndex
+                val currentStep = steps[pagerState.currentPage]
+
+                when (currentStep) {
+                    is OnboardingStep.SalarySetup -> {
+                        AppPrimaryButton(
+                            text = stringResource(Res.string.get_started),
+                            onClick = {
+                                viewModel.onEvent(OnboardingEvent.SaveProfileAndComplete)
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                    is OnboardingStep.ProfileSetup -> {
+                        AppPrimaryButton(
+                            text = stringResource(Res.string.next),
+                            onClick = {
+                                if (state.isProfileValid) {
+                                    coroutineScope.launch {
+                                        pagerState.animateScrollToPage(pagerState.currentPage + 1)
+                                    }
+                                } else {
+                                    viewModel.onEvent(OnboardingEvent.NameChanged(state.name))
+                                    viewModel.onEvent(OnboardingEvent.JobChanged(state.job))
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                    else -> {
+                        AppPrimaryButton(
+                            text = stringResource(Res.string.next),
+                            onClick = {
+                                coroutineScope.launch {
+                                    pagerState.animateScrollToPage(pagerState.currentPage + 1)
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))
@@ -268,6 +308,154 @@ private fun OnboardingPageContent(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
             modifier = Modifier.padding(horizontal = 24.dp)
+        )
+    }
+}
+
+@Composable
+private fun ProfileSetupScreenContent(
+    state: OnboardingState,
+    onEvent: (OnboardingEvent) -> Unit
+) {
+    val focusManager = LocalFocusManager.current
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 24.dp)
+            .verticalScroll(rememberScrollState()),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Box(
+            modifier = Modifier
+                .size(120.dp)
+                .background(
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                    shape = MaterialTheme.shapes.extraLarge
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = Icons.Default.Person,
+                contentDescription = null,
+                modifier = Modifier.size(60.dp),
+                tint = MaterialTheme.colorScheme.primary
+            )
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Text(
+            text = stringResource(Res.string.onboarding_profile_title),
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onBackground,
+            textAlign = TextAlign.Center
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Text(
+            text = stringResource(Res.string.onboarding_profile_description),
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center
+        )
+
+        Spacer(modifier = Modifier.height(32.dp))
+
+        AppTextField(
+            value = state.name,
+            onValueChange = { onEvent(OnboardingEvent.NameChanged(it)) },
+            label = stringResource(Res.string.name),
+            placeholder = "e.g., John Doe",
+            isError = state.nameError,
+            errorMessage = if (state.nameError) stringResource(Res.string.name_required) else null,
+            imeAction = ImeAction.Next,
+            onImeAction = { focusManager.moveFocus(FocusDirection.Down) }
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        AppTextField(
+            value = state.job,
+            onValueChange = { onEvent(OnboardingEvent.JobChanged(it)) },
+            label = stringResource(Res.string.job),
+            placeholder = "e.g., Software Engineer",
+            isError = state.jobError,
+            errorMessage = if (state.jobError) stringResource(Res.string.job_required) else null,
+            imeAction = ImeAction.Done,
+            onImeAction = { focusManager.clearFocus() }
+        )
+    }
+}
+
+@Composable
+private fun SalarySetupScreenContent(
+    state: OnboardingState,
+    onEvent: (OnboardingEvent) -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 24.dp)
+            .verticalScroll(rememberScrollState()),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Box(
+            modifier = Modifier
+                .size(120.dp)
+                .background(
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                    shape = MaterialTheme.shapes.extraLarge
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = Icons.Default.Payments,
+                contentDescription = null,
+                modifier = Modifier.size(60.dp),
+                tint = MaterialTheme.colorScheme.primary
+            )
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Text(
+            text = stringResource(Res.string.onboarding_salary_title),
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onBackground,
+            textAlign = TextAlign.Center
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Text(
+            text = stringResource(Res.string.onboarding_salary_description),
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center
+        )
+
+        Spacer(modifier = Modifier.height(32.dp))
+
+        AppTextField(
+            value = state.salary,
+            onValueChange = { input -> 
+                if (input.all { it.isDigit() }) {
+                    onEvent(OnboardingEvent.SalaryChanged(input))
+                }
+            },
+            label = stringResource(Res.string.salary_label),
+            placeholder = "e.g., 10000000",
+            isError = state.salaryError,
+            errorMessage = if (state.salaryError) stringResource(Res.string.salary_required) else null,
+            keyboardType = KeyboardType.Number,
+            visualTransformation = RupiahAmountVisualTransformation,
+            imeAction = ImeAction.Done,
+            onImeAction = { onEvent(OnboardingEvent.SaveProfileAndComplete) }
         )
     }
 }

@@ -43,6 +43,7 @@ fun AppTextField(
     isError: Boolean = false,
     errorMessage: String? = null,
     keyboardType: KeyboardType = KeyboardType.Text,
+    visualTransformation: VisualTransformation = VisualTransformation.None,
     imeAction: ImeAction = ImeAction.Next,
     onImeAction: () -> Unit = {},
     singleLine: Boolean = true,
@@ -85,6 +86,7 @@ fun AppTextField(
                     }
                 }
             },
+            visualTransformation = visualTransformation,
             isError = isError,
             keyboardOptions = KeyboardOptions(
                 keyboardType = keyboardType,
