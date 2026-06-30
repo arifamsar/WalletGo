@@ -20,7 +20,7 @@ actual fun FilePickerButton(
 ) {
     val context = LocalContext.current
     val launcher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
+        contract = ActivityResultContracts.OpenDocument()
     ) { uri ->
         if (uri == null) {
             Log.d("FilePicker", "Picker cancelled: returned URI is null")
@@ -67,7 +67,7 @@ actual fun FilePickerButton(
     Box(
         modifier = modifier.clickable {
             try {
-                launcher.launch("*/*")
+                launcher.launch(arrayOf("application/json", "*/*"))
             } catch (e: Exception) {
                 Log.e("FilePicker", "Failed to launch file picker", e)
                 Toast.makeText(

@@ -135,18 +135,31 @@ fun SettingsScreen(
             onImportLedger = { csvContent ->
                 coroutineScope.launch {
                     isImporting = true
+                    var successMessage: String? = null
+                    var errorMessage: String? = null
+                    
                     try {
                         importTransactionsUseCase(csvContent)
                             .onSuccess { count ->
-                                snackbarHostState.showSnackbar("Successfully imported $count transactions!")
+                                successMessage = "Successfully imported $count transactions!"
                             }
                             .onFailure { error ->
-                                snackbarHostState.showSnackbar("Import failed: ${error.message ?: "Unknown error"}")
+                                errorMessage = "Import failed: ${error.message ?: "Unknown error"}"
                             }
                     } catch (e: Exception) {
-                        snackbarHostState.showSnackbar("Import failed: ${e.message ?: "Unknown error"}")
-                    } finally {
-                        isImporting = false
+                        errorMessage = "Import failed: ${e.message ?: "Unknown error"}"
+                    }
+                    
+                    // Clear the loading overlay before showing the snackbar, 
+                    // because showSnackbar suspends until the snackbar is dismissed!
+                    isImporting = false
+                    
+                    val finalSuccess = successMessage
+                    val finalError = errorMessage
+                    if (finalSuccess != null) {
+                        snackbarHostState.showSnackbar(finalSuccess)
+                    } else if (finalError != null) {
+                        snackbarHostState.showSnackbar(finalError)
                     }
                 }
             },
