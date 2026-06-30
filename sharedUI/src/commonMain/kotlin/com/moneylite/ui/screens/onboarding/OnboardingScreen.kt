@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.filled.CalendarMonth
@@ -58,6 +59,16 @@ import com.moneylite.core.ui.components.switch_button.SwitchButton
 import com.moneylite.core.ui.components.switch_button.SwitchButtonConfig
 import com.moneylite.core.ui.components.switch_button.SwitchButtonIcon
 import kotlinx.coroutines.launch
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import kotlin.math.absoluteValue
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -176,11 +187,16 @@ fun OnboardingScreen(
             )
         }
     ) { innerPadding ->
+        val gradientColors = listOf(
+            MaterialTheme.colorScheme.primary.copy(alpha = 0.08f),
+            MaterialTheme.colorScheme.background
+        )
         Box(
             modifier = modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .background(MaterialTheme.colorScheme.background)
+                .imePadding()
+                .background(Brush.verticalGradient(gradientColors))
         ) {
             Column(
                 modifier = Modifier
@@ -195,10 +211,11 @@ fun OnboardingScreen(
                         .weight(1f)
                         .fillMaxWidth()
                 ) { page ->
+                    val pageOffset = (pagerState.currentPage - page) + pagerState.currentPageOffsetFraction
                     when (val step = steps[page]) {
-                        is OnboardingStep.Info -> OnboardingPageContent(page = step.page)
-                        OnboardingStep.ProfileSetup -> ProfileSetupScreenContent(state = state, onEvent = viewModel::onEvent)
-                        OnboardingStep.SalarySetup -> SalarySetupScreenContent(state = state, onEvent = viewModel::onEvent)
+                        is OnboardingStep.Info -> OnboardingPageContent(page = step.page, pageOffset = pageOffset)
+                        OnboardingStep.ProfileSetup -> ProfileSetupScreenContent(state = state, onEvent = viewModel::onEvent, pageOffset = pageOffset)
+                        OnboardingStep.SalarySetup -> SalarySetupScreenContent(state = state, onEvent = viewModel::onEvent, pageOffset = pageOffset)
                     }
                 }
 
@@ -266,48 +283,122 @@ fun OnboardingScreen(
 
 @Composable
 private fun OnboardingPageContent(
-    page: OnboardingPage
+    page: OnboardingPage,
+    pageOffset: Float
 ) {
+    val infiniteTransition = rememberInfiniteTransition(label = "floating")
+    val floatOffset by infiniteTransition.animateFloat(
+        initialValue = -10f,
+        targetValue = 10f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(2200, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "yOffset"
+    )
+    val floatRotation by infiniteTransition.animateFloat(
+        initialValue = -3f,
+        targetValue = 3f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(2800, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "rotation"
+    )
+
+    // Page offset transitions
+    val absOffset = pageOffset.absoluteValue
+    val scale = (1f - absOffset * 0.2f).coerceIn(0.8f, 1f)
+    val alpha = (1f - absOffset).coerceIn(0f, 1f)
+    val slideX = pageOffset * 200f // Slide horizontal direction opposite to swipe
+
     Column(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .graphicsLayer {
+                this.alpha = alpha
+            },
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
+        // Animated layered glow card
         Box(
             modifier = Modifier
-                .size(200.dp)
-                .background(
-                    color = MaterialTheme.colorScheme.primaryContainer,
-                    shape = MaterialTheme.shapes.extraLarge
-                ),
+                .size(220.dp)
+                .graphicsLayer {
+                    this.scaleX = scale
+                    this.scaleY = scale
+                    this.translationY = floatOffset
+                    this.rotationZ = floatRotation
+                },
             contentAlignment = Alignment.Center
         ) {
-            Icon(
-                imageVector = page.icon,
-                contentDescription = null,
-                modifier = Modifier.size(100.dp),
-                tint = MaterialTheme.colorScheme.primary
+            // Background Glow
+            Box(
+                modifier = Modifier
+                    .size(180.dp)
+                    .background(
+                        brush = Brush.radialGradient(
+                            colors = listOf(
+                                MaterialTheme.colorScheme.primary.copy(alpha = 0.25f),
+                                Color.Transparent
+                            )
+                        ),
+                        shape = MaterialTheme.shapes.extraLarge
+                    )
             )
+
+            // Main card with gradient background
+            Box(
+                modifier = Modifier
+                    .size(160.dp)
+                    .background(
+                        brush = Brush.linearGradient(
+                            colors = listOf(
+                                MaterialTheme.colorScheme.primaryContainer,
+                                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f)
+                            )
+                        ),
+                        shape = MaterialTheme.shapes.extraLarge
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = page.icon,
+                    contentDescription = null,
+                    modifier = Modifier.size(80.dp),
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
         }
 
-        Spacer(modifier = Modifier.height(48.dp))
+        Spacer(modifier = Modifier.height(40.dp))
 
         Text(
             text = stringResource(page.title),
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onBackground,
-            textAlign = TextAlign.Center
+            textAlign = TextAlign.Center,
+            modifier = Modifier
+                .graphicsLayer {
+                    translationX = slideX * 1.2f
+                }
+                .padding(horizontal = 16.dp)
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
         Text(
             text = stringResource(page.description),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
-            modifier = Modifier.padding(horizontal = 24.dp)
+            modifier = Modifier
+                .graphicsLayer {
+                    translationX = slideX * 1.5f
+                }
+                .padding(horizontal = 32.dp)
         )
     }
 }
@@ -315,13 +406,24 @@ private fun OnboardingPageContent(
 @Composable
 private fun ProfileSetupScreenContent(
     state: OnboardingState,
-    onEvent: (OnboardingEvent) -> Unit
+    onEvent: (OnboardingEvent) -> Unit,
+    pageOffset: Float
 ) {
     val focusManager = LocalFocusManager.current
+    val absOffset = pageOffset.absoluteValue
+    val scale = (1f - absOffset * 0.15f).coerceIn(0.85f, 1f)
+    val alpha = (1f - absOffset).coerceIn(0f, 1f)
+    val slideX = pageOffset * 150f
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(horizontal = 24.dp)
+            .graphicsLayer {
+                this.alpha = alpha
+                this.scaleX = scale
+                this.scaleY = scale
+            }
             .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
@@ -330,7 +432,12 @@ private fun ProfileSetupScreenContent(
             modifier = Modifier
                 .size(120.dp)
                 .background(
-                    color = MaterialTheme.colorScheme.primaryContainer,
+                    brush = Brush.linearGradient(
+                        colors = listOf(
+                            MaterialTheme.colorScheme.primaryContainer,
+                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f)
+                        )
+                    ),
                     shape = MaterialTheme.shapes.extraLarge
                 ),
             contentAlignment = Alignment.Center
@@ -350,7 +457,10 @@ private fun ProfileSetupScreenContent(
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onBackground,
-            textAlign = TextAlign.Center
+            textAlign = TextAlign.Center,
+            modifier = Modifier.graphicsLayer {
+                translationX = slideX * 1.2f
+            }
         )
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -359,46 +469,68 @@ private fun ProfileSetupScreenContent(
             text = stringResource(Res.string.onboarding_profile_description),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center
+            textAlign = TextAlign.Center,
+            modifier = Modifier.graphicsLayer {
+                translationX = slideX * 1.4f
+            }
         )
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        AppTextField(
-            value = state.name,
-            onValueChange = { onEvent(OnboardingEvent.NameChanged(it)) },
-            label = stringResource(Res.string.name),
-            placeholder = "e.g., John Doe",
-            isError = state.nameError,
-            errorMessage = if (state.nameError) stringResource(Res.string.name_required) else null,
-            imeAction = ImeAction.Next,
-            onImeAction = { focusManager.moveFocus(FocusDirection.Down) }
-        )
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .graphicsLayer {
+                    translationX = slideX * 1.6f
+                }
+        ) {
+            AppTextField(
+                value = state.name,
+                onValueChange = { onEvent(OnboardingEvent.NameChanged(it)) },
+                label = stringResource(Res.string.name),
+                placeholder = "e.g., John Doe",
+                isError = state.nameError,
+                errorMessage = if (state.nameError) stringResource(Res.string.name_required) else null,
+                imeAction = ImeAction.Next,
+                onImeAction = { focusManager.moveFocus(FocusDirection.Down) }
+            )
 
-        Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-        AppTextField(
-            value = state.job,
-            onValueChange = { onEvent(OnboardingEvent.JobChanged(it)) },
-            label = stringResource(Res.string.job),
-            placeholder = "e.g., Software Engineer",
-            isError = state.jobError,
-            errorMessage = if (state.jobError) stringResource(Res.string.job_required) else null,
-            imeAction = ImeAction.Done,
-            onImeAction = { focusManager.clearFocus() }
-        )
+            AppTextField(
+                value = state.job,
+                onValueChange = { onEvent(OnboardingEvent.JobChanged(it)) },
+                label = stringResource(Res.string.job),
+                placeholder = "e.g., Software Engineer",
+                isError = state.jobError,
+                errorMessage = if (state.jobError) stringResource(Res.string.job_required) else null,
+                imeAction = ImeAction.Done,
+                onImeAction = { focusManager.clearFocus() }
+            )
+        }
     }
 }
 
 @Composable
 private fun SalarySetupScreenContent(
     state: OnboardingState,
-    onEvent: (OnboardingEvent) -> Unit
+    onEvent: (OnboardingEvent) -> Unit,
+    pageOffset: Float
 ) {
+    val absOffset = pageOffset.absoluteValue
+    val scale = (1f - absOffset * 0.15f).coerceIn(0.85f, 1f)
+    val alpha = (1f - absOffset).coerceIn(0f, 1f)
+    val slideX = pageOffset * 150f
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(horizontal = 24.dp)
+            .graphicsLayer {
+                this.alpha = alpha
+                this.scaleX = scale
+                this.scaleY = scale
+            }
             .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
@@ -407,7 +539,12 @@ private fun SalarySetupScreenContent(
             modifier = Modifier
                 .size(120.dp)
                 .background(
-                    color = MaterialTheme.colorScheme.primaryContainer,
+                    brush = Brush.linearGradient(
+                        colors = listOf(
+                            MaterialTheme.colorScheme.primaryContainer,
+                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f)
+                        )
+                    ),
                     shape = MaterialTheme.shapes.extraLarge
                 ),
             contentAlignment = Alignment.Center
@@ -427,7 +564,10 @@ private fun SalarySetupScreenContent(
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onBackground,
-            textAlign = TextAlign.Center
+            textAlign = TextAlign.Center,
+            modifier = Modifier.graphicsLayer {
+                translationX = slideX * 1.2f
+            }
         )
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -436,26 +576,37 @@ private fun SalarySetupScreenContent(
             text = stringResource(Res.string.onboarding_salary_description),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center
+            textAlign = TextAlign.Center,
+            modifier = Modifier.graphicsLayer {
+                translationX = slideX * 1.4f
+            }
         )
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        AppTextField(
-            value = state.salary,
-            onValueChange = { input -> 
-                if (input.all { it.isDigit() }) {
-                    onEvent(OnboardingEvent.SalaryChanged(input))
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .graphicsLayer {
+                    translationX = slideX * 1.6f
                 }
-            },
-            label = stringResource(Res.string.salary_label),
-            placeholder = "e.g., 10000000",
-            isError = state.salaryError,
-            errorMessage = if (state.salaryError) stringResource(Res.string.salary_required) else null,
-            keyboardType = KeyboardType.Number,
-            visualTransformation = RupiahAmountVisualTransformation,
-            imeAction = ImeAction.Done,
-            onImeAction = { onEvent(OnboardingEvent.SaveProfileAndComplete) }
-        )
+        ) {
+            AppTextField(
+                value = state.salary,
+                onValueChange = { input -> 
+                    if (input.all { it.isDigit() }) {
+                        onEvent(OnboardingEvent.SalaryChanged(input))
+                    }
+                },
+                label = stringResource(Res.string.salary_label),
+                placeholder = "e.g., 10000000",
+                isError = state.salaryError,
+                errorMessage = if (state.salaryError) stringResource(Res.string.salary_required) else null,
+                keyboardType = KeyboardType.Number,
+                visualTransformation = RupiahAmountVisualTransformation,
+                imeAction = ImeAction.Done,
+                onImeAction = { onEvent(OnboardingEvent.SaveProfileAndComplete) }
+            )
+        }
     }
 }
