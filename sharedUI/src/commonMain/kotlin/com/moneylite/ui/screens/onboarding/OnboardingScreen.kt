@@ -182,13 +182,13 @@ fun OnboardingScreen(
         Box(
             modifier = modifier
                 .fillMaxSize()
-                .padding(innerPadding)
-                .imePadding()
                 .background(Brush.verticalGradient(gradientColors))
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
+                    .padding(innerPadding)
+                    .imePadding()
                     .padding(24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
