@@ -71,7 +71,7 @@ fun AppNavigation(
                     }
                     entry<Route.Onboarding> {
                         OnboardingScreen(
-                            onOnboardingComplete = rootNavigator::navigateToLogin
+                            onOnboardingComplete = rootNavigator::navigateToMain
                         )
                     }
 

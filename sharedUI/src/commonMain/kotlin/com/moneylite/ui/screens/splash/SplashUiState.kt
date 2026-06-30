@@ -14,7 +14,10 @@ data class SplashUiState(
      * Determines the next screen based on the current state
      */
     val nextScreen: NextScreen
-        get() = NextScreen.Home
+        get() = when {
+            !isOnboardingCompleted -> NextScreen.Onboarding
+            else -> NextScreen.Home
+        }
 }
 
 /**
