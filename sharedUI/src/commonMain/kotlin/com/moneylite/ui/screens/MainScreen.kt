@@ -9,14 +9,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.navigation3.rememberListDetailSceneStrategy
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation3.runtime.NavKey
@@ -81,27 +79,13 @@ fun MainScreen(
                         }
                     }
 
-                    Scaffold(
-                        contentWindowInsets = WindowInsets(0, 0, 0, 0),
-                        bottomBar = {
-                            if (!isTablet) {
-                                AnimatedVisibility(
-                                    visible = navigationState.isOnTopLevelDestination,
-                                    enter = slideInVertically { it },
-                                    exit = slideOutVertically { it }
-                                ) {
-                                    AppNavigationBar(
-                                        selectedKey = navigationState.topLevelRoute,
-                                        onSelectKey = navigator::navigate
-                                    )
-                                }
-                            }
-                        }
-                    ) { innerPadding ->
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxSize()
+                    ) {
                         NavDisplay(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(innerPadding),
+                            modifier = Modifier.fillMaxSize(),
                             onBack = navigator::goBack,
                             sceneStrategy = listDetailStrategy,
                             transitionSpec = mainForwardTransition(),
@@ -115,6 +99,20 @@ fun MainScreen(
                                 }
                             )
                         )
+
+                        if (!isTablet) {
+                            androidx.compose.animation.AnimatedVisibility(
+                                visible = navigationState.isOnTopLevelDestination,
+                                enter = slideInVertically { it },
+                                exit = slideOutVertically { it },
+                                modifier = Modifier.align(Alignment.BottomCenter)
+                            ) {
+                                AppNavigationBar(
+                                    selectedKey = navigationState.topLevelRoute,
+                                    onSelectKey = navigator::navigate
+                                )
+                            }
+                        }
                     }
                 }
             }

@@ -151,7 +151,8 @@ fun HomeScreenContent(
                 onClick = onNavigateToAddTransaction,
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary,
-                shape = MaterialTheme.shapes.large
+                shape = MaterialTheme.shapes.large,
+                modifier = Modifier.padding(bottom = 80.dp)
             ) {
                 Icon(
                     imageVector = Icons.Default.Add,
