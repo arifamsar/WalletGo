@@ -1,3 +1,6 @@
+import java.util.Properties
+import java.io.File
+
 plugins {
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.android.application)
@@ -21,9 +24,41 @@ android {
         }
     }
 
+    signingConfigs {
+        create("release") {
+            val localProperties = Properties().apply {
+                val file = rootProject.file("local.properties")
+                if (file.exists()) {
+                    file.inputStream().use { load(it) }
+                }
+            }
+            val storeFileVal = (localProperties.getProperty("signing.storeFilePath") ?: System.getenv("SIGNING_STORE_FILE"))?.let { path ->
+                val f = file(path)
+                if (f.exists()) f else rootProject.file(path)
+            }
+            val storePasswordVal = localProperties.getProperty("signing.storePassword")
+                ?: System.getenv("SIGNING_STORE_PASSWORD")
+            val keyAliasVal = localProperties.getProperty("signing.keyAlias")
+                ?: System.getenv("SIGNING_KEY_ALIAS")
+            val keyPasswordVal = localProperties.getProperty("signing.keyPassword")
+                ?: System.getenv("SIGNING_KEY_PASSWORD")
+
+            if (storeFileVal != null && storeFileVal.exists() && storePasswordVal != null && keyAliasVal != null && keyPasswordVal != null) {
+                storeFile = storeFileVal
+                storePassword = storePasswordVal
+                keyAlias = keyAliasVal
+                keyPassword = keyPasswordVal
+            }
+        }
+    }
+
     buildTypes {
         getByName("release") {
             isMinifyEnabled = false
+            val releaseConfig = signingConfigs.getByName("release")
+            if (releaseConfig.storeFile != null) {
+                signingConfig = releaseConfig
+            }
         }
     }
 
