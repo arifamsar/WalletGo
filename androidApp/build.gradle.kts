@@ -32,16 +32,13 @@ android {
                     file.inputStream().use { load(it) }
                 }
             }
-            val storeFileVal = (localProperties.getProperty("signing.storeFilePath") ?: System.getenv("SIGNING_STORE_FILE"))?.let { path ->
+            val storeFileVal = (localProperties.getProperty("signing.storeFilePath") ?: System.getenv("SIGNING_STORE_FILE"))?.trim()?.let { path ->
                 val f = file(path)
                 if (f.exists()) f else rootProject.file(path)
             }
-            val storePasswordVal = localProperties.getProperty("signing.storePassword")
-                ?: System.getenv("SIGNING_STORE_PASSWORD")
-            val keyAliasVal = localProperties.getProperty("signing.keyAlias")
-                ?: System.getenv("SIGNING_KEY_ALIAS")
-            val keyPasswordVal = localProperties.getProperty("signing.keyPassword")
-                ?: System.getenv("SIGNING_KEY_PASSWORD")
+            val storePasswordVal = (localProperties.getProperty("signing.storePassword") ?: System.getenv("SIGNING_STORE_PASSWORD"))?.trim()
+            val keyAliasVal = (localProperties.getProperty("signing.keyAlias") ?: System.getenv("SIGNING_KEY_ALIAS"))?.trim()
+            val keyPasswordVal = (localProperties.getProperty("signing.keyPassword") ?: System.getenv("SIGNING_KEY_PASSWORD"))?.trim()
 
             if (storeFileVal != null && storeFileVal.exists() && storePasswordVal != null && keyAliasVal != null && keyPasswordVal != null) {
                 storeFile = storeFileVal

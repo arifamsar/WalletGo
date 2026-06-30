@@ -30,14 +30,30 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
 
-      - name: Decode Keystore
+      - name: Verify Secrets and Decode Keystore
         env:
           KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
           if [ -z "$KEYSTORE_BASE64" ]; then
-            echo "Error: ANDROID_KEYSTORE_BASE64 secret is not set."
+            echo "::error::ANDROID_KEYSTORE_BASE64 secret is missing or empty."
             exit 1
           fi
+          if [ -z "$STORE_PASSWORD" ]; then
+            echo "::error::ANDROID_KEYSTORE_PASSWORD secret is missing or empty."
+            exit 1
+          fi
+          if [ -z "$KEY_ALIAS" ]; then
+            echo "::error::ANDROID_KEY_ALIAS secret is missing or empty."
+            exit 1
+          fi
+          if [ -z "$KEY_PASSWORD" ]; then
+            echo "::error::ANDROID_KEY_PASSWORD secret is missing or empty."
+            exit 1
+          fi
+          echo "All signing secrets are present!"
           echo "$KEYSTORE_BASE64" | base64 --decode > androidApp/release.jks
 
       - name: Build Android APK & Bundle (Release)
